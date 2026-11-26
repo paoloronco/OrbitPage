@@ -34,7 +34,7 @@ import {
   PanelLeftClose,
   PanelLeftOpen,
   Share2,
-  Sparkles,
+  Bot,
   ShieldCheck,
   UserRound,
   UsersRound,
@@ -158,7 +158,7 @@ interface AdminViewProps {
 
 const pageTabs: Array<{ value: AdminTab; icon: React.ElementType; iconName: string }> = [
   { value: "profile", icon: UserRound, iconName: "person-outline" },
-  { value: "ai", icon: Sparkles, iconName: "auto-awesome-outlined" },
+  { value: "ai", icon: Bot, iconName: "smart-toy-outlined" },
   { value: "theme", icon: Palette, iconName: "palette-outlined" },
   { value: "publish", icon: Share2, iconName: "share-outlined" },
   { value: "backup", icon: Database, iconName: "storage-outlined" },

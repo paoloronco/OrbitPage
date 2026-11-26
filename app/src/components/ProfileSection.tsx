@@ -12,7 +12,7 @@ import {
   Palette,
   RotateCcw,
   Save,
-  Sparkles,
+  Layers3,
   Square,
   EyeOff,
   UserRound,
@@ -683,7 +683,7 @@ export const ProfileSection = ({
                   { id: "personalized", label: tr("Personalized", "Personalizzato"), icon: Square },
                   { id: "transparent", label: tr("Transparent", "Trasparente"), icon: EyeOff },
                   { id: "image", label: tr("Image", "Immagine"), icon: ImageIcon },
-                  { id: "liquid-glass", label: "Liquid glass", icon: Sparkles },
+                  { id: "liquid-glass", label: "Liquid glass", icon: Layers3 },
                 ] as const).map((option) => {
                   const Icon = option.icon;
                   const active = selectedCardStyle === option.id;

@@ -13,7 +13,7 @@ import {
   RefreshCw,
   ServerCog,
   ShieldCheck,
-  Sparkles,
+  KeyRound,
   X,
   XCircle,
 } from "lucide-react";
@@ -180,7 +180,7 @@ export const InitialSetup = ({ onSetupComplete }: InitialSetupProps) => {
                 <div className="setup-field">
                   <div className="setup-field-heading">
                     <Label htmlFor="setup-password">Password</Label>
-                    <button onClick={handleGeneratePassword} type="button"><Sparkles aria-hidden="true" size={14} />{tr("Generate", "Genera")}</button>
+                    <button onClick={handleGeneratePassword} type="button"><KeyRound aria-hidden="true" size={14} />{tr("Generate", "Genera")}</button>
                   </div>
                   <div className="setup-password-field">
                     <Input id="setup-password" type={showPassword ? "text" : "password"} autoComplete="new-password" value={password} onChange={(event) => setPassword(event.target.value)} />

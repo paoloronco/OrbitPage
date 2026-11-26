@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { AlertTriangle, CheckCircle2, Database, Download, Sparkles, Trash2, Upload, X } from "@/components/ui/material-icons";
+import { AlertTriangle, CheckCircle2, Database, Download, Files, Search, Trash2, Upload, X } from "@/components/ui/material-icons";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { OrbitLoader } from "@/components/ui/orbit-loader";
@@ -468,7 +468,7 @@ export function BackupManager({ hosted = false, canRestore = true }: BackupManag
         <Card className={`admin-backup-manager admin-backup-media-card glass-card p-6 ${DEMO_MODE ? "opacity-70" : ""}`}>
           <section className="admin-backup-section admin-backup-section--media space-y-4" aria-labelledby="media-cleanup-heading">
             <div className="flex items-start gap-3">
-              <span className="rounded-lg bg-primary/10 p-2 text-primary"><Sparkles className="h-4 w-4" /></span>
+              <span className="rounded-lg bg-primary/10 p-2 text-primary"><Files className="h-4 w-4" /></span>
               <div>
                 <h4 id="media-cleanup-heading" className="text-sm font-semibold">{tr("Unused media", "Media inutilizzati")}</h4>
                 <p className="text-xs leading-5 text-muted-foreground">
@@ -486,7 +486,7 @@ export function BackupManager({ hosted = false, canRestore = true }: BackupManag
             )}
             <div className="flex flex-col gap-2 sm:flex-row">
               <Button type="button" variant="outline" className="admin-action" onClick={() => void inspectUnusedMedia()} disabled={Boolean(cleanupBusy)}>
-                {cleanupBusy === "preview" ? <OrbitLoader size={16} state="searching" /> : <Sparkles className="h-4 w-4" />}
+                {cleanupBusy === "preview" ? <OrbitLoader size={16} state="searching" /> : <Search className="h-4 w-4" />}
                 {tr("Check unused media", "Controlla media inutilizzati")}
               </Button>
               <Button type="button" variant="outline" className="admin-action" onClick={() => void cleanUnusedMedia()} disabled={Boolean(cleanupBusy) || DEMO_MODE || !canRestore || !cleanupReport?.unused}>

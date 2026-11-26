@@ -2,7 +2,7 @@ import { Card } from "@/components/ui/card";
 import type { LinkData } from "./LinkCard";
 import { getCalloutData } from "@/lib/link-blocks";
 import { trackPublicLinkClick } from "@/lib/public-runtime";
-import { ArrowUpRight, Sparkles } from "lucide-react";
+import { ArrowUpRight, Megaphone } from "lucide-react";
 import { getPublicAccentStyle, getPublicBlockPadding, getPublicBlockStyle, getPublicButtonStyle, getPublicIconContent, getPublicIconSize } from "@/lib/public-block-style";
 import { resolveSafePublicHref } from "@/lib/browser-network-policy";
 
@@ -34,7 +34,7 @@ export const PublicCalloutCard = ({ link }: PublicCalloutCardProps) => {
       <div className="absolute inset-x-0 top-0 h-1 bg-primary/60" />
       <div className={`public-block-header ${getPublicBlockPadding(link.size)}`}>
         <div className={`flex ${getPublicIconSize(link.size)} shrink-0 items-center justify-center rounded-lg bg-primary/14 text-primary ring-1 ring-primary/20`} style={getPublicAccentStyle(link)}>
-          {getPublicIconContent(link, <Sparkles className="h-5 w-5" />)}
+          {getPublicIconContent(link, <Megaphone className="h-5 w-5" />)}
         </div>
         <div className="public-block-copy space-y-2">
           {badge ? (

@@ -10,7 +10,7 @@ import {
   Palette,
   Server,
   ShieldCheck,
-  Sparkles,
+  LayoutTemplate,
   UploadCloud,
 } from "lucide-react";
 import { utilityApi } from "@/lib/api-client";
@@ -182,7 +182,7 @@ const About = () => {
             </p>
           </div>
           <div className="rounded-lg bg-slate-950 p-6 text-white">
-            <Sparkles className="h-6 w-6 text-blue-300" />
+            <LayoutTemplate className="h-6 w-6 text-blue-300" />
             <h3 className="mt-4 text-lg font-semibold">For polished public pages</h3>
             <p className="mt-2 text-sm leading-6 text-slate-300">
               Build a public page with links, text cards, separators, social links, cover images, and SEO metadata.

@@ -17,7 +17,7 @@ const presets = [
   ["image", "Photo", "Foto"], ["video", "Video", "Video"], ["music", "Music", "Musica"],
   ["headphones", "Audio", "Audio"], ["camera", "Camera", "Fotocamera"], ["briefcase", "Work", "Lavoro"],
   ["graduation-cap", "Learning", "Formazione"], ["heart", "Heart", "Cuore"], ["star", "Star", "Stella"],
-  ["gift", "Gift", "Regalo"], ["message-circle", "Message", "Messaggio"], ["sparkles", "Highlights", "Novità"],
+  ["gift", "Gift", "Regalo"], ["message-circle", "Message", "Messaggio"], ["megaphone", "Highlights", "Novità"],
 ] as const;
 
 type IconValue = Pick<LinkData, "icon" | "iconType">;

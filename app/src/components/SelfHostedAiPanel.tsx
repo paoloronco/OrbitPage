@@ -12,7 +12,8 @@ import {
   KeyRound,
   Send,
   ShieldCheck,
-  Sparkles,
+  Sliders,
+  Bot,
   Trash2,
 } from "@/components/ui/material-icons";
 import { Button } from "@/components/ui/button";
@@ -274,7 +275,7 @@ export function SelfHostedAiPanel({ canManageSettings, historyKey = "admin", onA
       <section className="oss-ai-workspace ai-assistant-chat" aria-labelledby="oss-ai-heading">
         <header className="oss-ai-workspace-header">
           <div className="oss-ai-mark" aria-hidden="true">
-            <Sparkles />
+            <Bot />
           </div>
           <div>
             <h2 id="oss-ai-heading">OrbitPage AI</h2>
@@ -304,7 +305,7 @@ export function SelfHostedAiPanel({ canManageSettings, historyKey = "admin", onA
             >
               {message.role === "assistant" && (
                 <span className="oss-ai-message-icon" aria-hidden="true">
-                  {message.error ? <AlertCircle /> : <Sparkles />}
+                  {message.error ? <AlertCircle /> : <Bot />}
                 </span>
               )}
               <p>{message.content}</p>
@@ -390,7 +391,7 @@ export function SelfHostedAiPanel({ canManageSettings, historyKey = "admin", onA
       <div className="oss-ai-aside-stack">
       <aside className="oss-ai-settings ai-assistant-aside" aria-labelledby="oss-ai-settings-heading">
         <div className="oss-ai-settings-title">
-          <span><Sparkles aria-hidden="true" /></span>
+          <span><Sliders aria-hidden="true" /></span>
           <div>
             <h2 id="oss-ai-settings-heading">{tr("AI usage", "Utilizzo AI")}</h2>
             <p>{tr(
@@ -562,7 +563,7 @@ export function SelfHostedAiPanel({ canManageSettings, historyKey = "admin", onA
             disabled={!configured || launching || !launchScreenshot || !launchAttested}
             type="submit"
           >
-            {launching ? <OrbitLoader size={16} state="weaving" /> : <Sparkles className="h-4 w-4" />}
+            {launching ? <OrbitLoader size={16} state="weaving" /> : <ImagePlus className="h-4 w-4" />}
             {launching ? tr("Preparing preview…", "Preparazione anteprima…") : tr("Create preview", "Crea anteprima")}
           </Button>
         </form>

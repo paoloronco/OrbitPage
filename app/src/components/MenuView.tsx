@@ -1,5 +1,5 @@
 import { useState, type ReactNode, type CSSProperties } from 'react';
-import { ArrowLeft, ChevronDown, Leaf, Search, Sparkles, X } from 'lucide-react';
+import { ArrowLeft, ChevronDown, Leaf, Search, Star, X } from 'lucide-react';
 import { formatMenuPrice, type MenuSection, type MenuCatalog } from '@/lib/menu';
 import { withBasePath } from '@/lib/base-path';
 import { resolveSafePublicMediaUrl } from '@/lib/browser-network-policy';
@@ -116,7 +116,7 @@ export function MenuView({ menu, pageHref = withBasePath('/'), selectedSectionId
           <div className="orbitpage-menu-item__content">
             <div className="orbitpage-menu-item__title-row">
               <h3>{item.name}</h3>
-              {item.featured && <Sparkles aria-label="Featured" />}
+              {item.featured && <Star aria-label="Featured" />}
               <strong>{formatMenuPrice(item.priceMinor, menu.currency, menu.locale)}</strong>
             </div>
             {item.description && <p>{item.description}</p>}

@@ -3,7 +3,7 @@ import { useAiConversationScroll } from "@/lib/use-ai-conversation-scroll";
 import { keepMobileInputVisible } from '@/lib/mobile-keyboard-focus';
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { Check, Send, ShieldCheck, Sparkles, Trash2, X } from "@/components/ui/material-icons";
+import { Check, Send, ShieldCheck, Bot, Trash2, X } from "@/components/ui/material-icons";
 import {
   aiPageAgentApi,
   type AiConversationMessage,
@@ -164,7 +164,7 @@ export function SelfHostedAiAgent({ historyKey = "admin", onApplied }: { history
   const panel = open && typeof document !== "undefined" ? createPortal(
         <section aria-label="OrbitPage AI" aria-modal="true" className="ai-page-agent-panel" ref={panelRef} role="dialog" tabIndex={-1}>
           <header className="ai-page-agent-header">
-            <span className="ai-page-agent-mark" aria-hidden="true"><Sparkles size={18} /></span>
+            <span className="ai-page-agent-mark" aria-hidden="true"><Bot size={18} /></span>
             <div><strong>OrbitPage AI</strong><small>{labels.tagline}</small></div>
             <button aria-label={labels.clear} disabled={sending || messages.some((item) => item.applying) || !messages.some((item) => item.persistent !== false)} onClick={() => { setMessages([]); setDraft(""); }} title={labels.clear} type="button"><Trash2 size={18} /></button>
             <button ref={closeRef} aria-label={labels.close} onClick={() => { setOpen(false); launcherRef.current?.focus(); }} type="button"><X size={18} /></button>
@@ -183,7 +183,7 @@ export function SelfHostedAiAgent({ historyKey = "admin", onApplied }: { history
                           ? <><OrbitLoader size={16} state="weaving" />{labels.applying}</>
                           : item.applied
                             ? <><Check aria-hidden="true" size={16} />{labels.applied}</>
-                            : <><Sparkles aria-hidden="true" size={16} />{labels.apply}</>}
+                            : <><Check aria-hidden="true" size={16} />{labels.apply}</>}
                       </button>
                       <button disabled={item.applying} onClick={() => setMessages(current => current.map(message => message.id === item.id ? { ...message, proposal: null } : message))} type="button">{tr("Discard", "Scarta")}</button>
                     </div>
@@ -221,7 +221,7 @@ export function SelfHostedAiAgent({ historyKey = "admin", onApplied }: { history
     <div className={`ai-page-agent${open ? " is-open" : ""}`}>
       {panel}
       <button ref={launcherRef} aria-expanded={open} aria-label={labels.launch} className="ai-page-agent-launcher" onClick={() => setOpen((current) => !current)} type="button">
-        <Sparkles aria-hidden="true" size={19} /><span>{labels.launch}</span>
+        <Bot aria-hidden="true" size={19} /><span>{labels.launch}</span>
       </button>
     </div>
   );
