@@ -55,11 +55,11 @@ Indexing controls let you exclude a page from search. They do not make the URL p
 
 Open **Publish → QR**. Choose the public page, the enabled Menu or a custom
 public path. Confirm the resolved destination displayed by the tool. Choose
-the screen or print preset, colors, size, quiet-zone margin and error correction,
+the screen or print preset, colors, size, QR code margin and error correction,
 then download PNG or SVG. Settings are remembered in this browser for that URL.
 
-The tool blocks download when QR contrast is insufficient. Keep a clear quiet
-zone and test the exported image with a phone at its final display/print size.
+The tool blocks download when QR contrast is insufficient. Keep a clear border
+around the code and test the exported image with a phone at its final display/print size.
 A static QR embeds its URL: changing that URL requires a new image and print.
 Changing the content at the same URL does not.
 

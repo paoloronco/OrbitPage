@@ -31,7 +31,7 @@ const multi = (id: string, name: string, description: string, mood: string, vari
 
 export const cardThemePresets: CardThemePreset[] = [
   mono('ink-signal', 'Mono — Ink Signal', 'Dark editorial cards with a sharp blue signal.', 'Editorial', surface('#111827', '#1f2937', '#f9fafb', '#cbd5e1', '#334155', '#3b82f6', '#ffffff')),
-  mono('porcelain', 'Mono — Porcelain', 'Quiet warm cards with precise black typography.', 'Minimal', surface('#fffdf7', '#f4efe3', '#171717', '#57534e', '#d6d3d1', '#171717', '#ffffff')),
+  mono('porcelain', 'Mono — Porcelain', 'Cream cards with black typography.', 'Minimal', surface('#fffdf7', '#f4efe3', '#171717', '#57534e', '#d6d3d1', '#171717', '#ffffff')),
   mono('ocean-ledger', 'Mono — Ocean Ledger', 'Deep blue surfaces with cool cyan actions.', 'Professional', surface('#0b2545', '#133c67', '#f0f9ff', '#bae6fd', '#2b5d87', '#38bdf8', '#082f49')),
   mono('moss-paper', 'Mono — Moss Paper', 'Natural green cards with soft paper contrast.', 'Organic', surface('#e7eadf', '#d7ddc8', '#26351f', '#526149', '#aab89b', '#395b2c', '#ffffff')),
   mono('mono-redline', 'Mono — Redline', 'Neutral monochrome cards with a disciplined red accent.', 'Graphic', surface('#f5f5f4', '#e7e5e4', '#1c1917', '#57534e', '#a8a29e', '#dc2626', '#ffffff')),

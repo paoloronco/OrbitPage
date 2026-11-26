@@ -290,7 +290,7 @@ export const themePresets: ThemePreset[] = [
   createPreset({
     id: "sandstone",
     name: "Sandstone",
-    description: "Quiet mineral tones with olive accents and generous breathing room.",
+    description: "Sand and beige tones with olive accents and wide spacing.",
     mood: "Refined / grounded",
     primary: "#6f7744",
     primaryGlow: "#9ca467",
@@ -422,7 +422,7 @@ export const themePresets: ThemePreset[] = [
   createPreset({
     id: "alpine-gold",
     name: "Alpine Gold",
-    description: "Deep evergreen cards with mineral gold details and quiet depth.",
+    description: "Deep green cards with gold details.",
     mood: "Grounded / premium",
     primary: "#e3b85d",
     primaryGlow: "#f2d58f",
