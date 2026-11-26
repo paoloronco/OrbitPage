@@ -2,7 +2,7 @@
 
 Sell digital downloads and services from your self-hosted OrbitPage installation, using your own Stripe account and SMTP provider. OrbitPage adds no platform fee; Stripe fees apply.
 
-![The real OrbitPage Shop editor with a fictional digital workbook and a portfolio review service](https://github.com/paoloronco/OrbitPage/releases/download/v4.21.99/shop-guide-catalog-4.21.99.jpg)
+![The OrbitPage Shop editor with a fictional digital workbook and a portfolio review service](https://github.com/paoloronco/OrbitPage/releases/download/v4.21.99/shop-guide-catalog-4.21.99.jpg)
 
 *OrbitPage 4.21.99, captured locally with fictional Studio North products. The preview is not a live checkout.*
 
@@ -84,7 +84,7 @@ Follow the self-hosted payment procedure in [Stripe](../../integrations/stripe.m
 
 Configure and test your sender with [SMTP email setup](../../integrations/smtp.md#shop). OSS uses custom SMTP; it does not provide managed OrbitPage delivery. Keep the instance running for retries and scheduled reminders.
 
-![The real OrbitPage Shop email settings with empty SMTP credential fields](https://github.com/paoloronco/OrbitPage/releases/download/v4.21.99/shop-guide-email-4.21.99.jpg)
+![The OrbitPage Shop email settings with empty SMTP credential fields](https://github.com/paoloronco/OrbitPage/releases/download/v4.21.99/shop-guide-email-4.21.99.jpg)
 
 ## Test checklist
 
@@ -165,7 +165,7 @@ a 16:9 screen that scales to the available width.
 | Unknown order / ownership mismatch | Check whether the event came from another app or Shop sharing the account. Do not delete orders to make it pass. |
 | Account/mode change blocked | Verified test→live transitions clear only classified test data. Live/unclassified history is protected; use the same account/mode for key rotation. |
 | Cannot publish or accept payments | Complete Compliance, Stripe/webhook, successful SMTP test and an available product with delivery details. |
-| Receipt waiting | Check payment state and the real Checkout event's delivery. Pending or failed payments grant no files. |
+| Receipt waiting | Check payment state and delivery of the purchase’s Checkout event. Pending or failed payments grant no files. |
 | Expired link / missing new purchase | Use that purchase's recent receipt/personal link. Old customer tokens do not gain future purchases. |
 | Download unavailable | Check refund/dispute/erasure, expiry, shared download allowance and the persistent file volume. |
 | Email missing | Check Shop SMTP, TLS, sender permission, provider logs, running queue and spam. See [SMTP troubleshooting](../../integrations/smtp.md). |

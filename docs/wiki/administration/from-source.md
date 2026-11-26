@@ -78,9 +78,9 @@ Choose the administrator password before making the instance reachable by other 
 
 ## Publish safely
 
-Keep loopback access when a reverse proxy runs on the same machine. For LAN access, explicitly set `HOST=0.0.0.0` and restrict access at the network boundary. Configure the real `PUBLIC_SITE_URL`, reverse proxy and HTTPS before public use; follow [Reverse proxy and HTTPS](./Deployment.md#reverse-proxy-and-https).
+Keep loopback access when a reverse proxy runs on the same machine. For LAN access, explicitly set `HOST=0.0.0.0` and restrict access at the network boundary. Configure the production `PUBLIC_SITE_URL`, reverse proxy and HTTPS before public use; follow [Reverse proxy and HTTPS](./Deployment.md#reverse-proxy-and-https).
 
-Check the public page, dashboard login, uploads and `/health` after changing the address. Configure backups of the data directory and the private environment file before accepting real content. See [Maintenance](./maintenance.md).
+Check the public page, dashboard login, uploads and `/health` after changing the address. Configure backups of the data directory and the private environment file before adding your content. See [Maintenance](./maintenance.md).
 
 ## Update a source installation
 

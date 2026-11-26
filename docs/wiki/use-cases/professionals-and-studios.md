@@ -36,7 +36,7 @@ Use the studio or professional profile preset, a concise service statement, sele
 
 AI can prepare a shorter positioning statement, reorganize standard content blocks, add a focused call to action or propose a visual treatment that fits the practice. The professional reviews the page-level changes before applying them.
 
-Proof, qualifications and outcomes should always remain grounded in real work.
+Proof, qualifications and outcomes should always remain supported by work you have completed.
 
 <a id="shop"></a>
 
@@ -71,7 +71,7 @@ For proposals, email signatures and printed materials, a domain controlled by th
 - [Choose blocks](../dashboard/sections/content-blocks.md).
 - [Check publishing and QR destinations](../dashboard/sections/publishing.md).
 - [Coaching and consulting](./coaches-and-consultants.md): Explain the service before the booking action.
-- [Real-estate pages](./real-estate-professionals.md): Separate viewing requests from valuation enquiries.
+- [Property pages](./real-estate-professionals.md): Separate viewing requests from valuation enquiries.
 - [Developer pages](https://orbitpage.com/en-US/link-in-bio-for-developers): Show projects, technical writing and collaboration details.
 - [Set up optional digital products or paid services](../dashboard/sections/shop.md).
 - [Connect booking tools, forms and external content](../integrations/external-modules.md).

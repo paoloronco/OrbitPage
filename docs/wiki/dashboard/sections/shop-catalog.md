@@ -39,4 +39,4 @@ Existing orders, open checkouts, receipts, refunds and coupons retain their orig
 
 ## Required setup and AI drafts
 
-Ask **AI Assistant** to draft a product with a title, description, type and price in the configured Shop currency. Review and confirm the proposal. AI products are saved as drafts: add real files or service delivery details yourself before enabling purchase.
+Ask **AI Assistant** to draft a product with a title, description, type and price in the configured Shop currency. Review and confirm the proposal. AI products are saved as drafts: add the product files or service delivery details yourself before enabling purchase.

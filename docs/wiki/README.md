@@ -53,7 +53,7 @@ Use these practical guides to choose a content order, build the page and check t
 - [Professionals and studios](./use-cases/professionals-and-studios.md)
 - [Coaches and consultants](./use-cases/coaches-and-consultants.md)
 - [Digital products and small brands](./use-cases/digital-products-and-small-brands.md)
-- [Real-estate professionals](./use-cases/real-estate-professionals.md)
+- [Property professionals](./use-cases/real-estate-professionals.md)
 
 ## Integrations
 

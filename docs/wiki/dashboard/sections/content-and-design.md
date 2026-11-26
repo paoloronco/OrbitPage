@@ -10,7 +10,7 @@ Edit your public identity, content blocks, menu, additional pages and appearance
 4. Set colors, fonts, and background in **Theme**.
 5. Save each workspace, then open **Public page** and check the result at mobile and desktop widths.
 
-The dashboard preview uses the public renderer, but the public URL is the final check for browser metadata, external embeds, consent behavior, and real navigation.
+The dashboard preview uses the public renderer, but the public URL is the final check for browser metadata, external embeds, consent behavior, and public navigation.
 
 ## Page identity
 

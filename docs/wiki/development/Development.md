@@ -64,7 +64,7 @@ node scripts/check-markdown-links.mjs
 node scripts/check-tracked-runtime-data.mjs
 ```
 
-Installer and updater checks are listed in [Scripts](../../../scripts/README.md). Do not test host-changing installers against a real instance.
+Installer and updater checks are listed in [Scripts](../../../scripts/README.md). Do not test host-changing installers against a live installation.
 
 ## Make a change
 

@@ -15,7 +15,7 @@ Use a page preset as the starting point, then refine only what the page needs. T
 - card radius, spacing, blur, shadow, and public-page width;
 - solid color, gradient, uploaded MP4/WebM video, or uploaded GIF backgrounds.
 
-**Page themes**, **Card styles**, and **Fine tuning** share the top navigation. In Fine tuning, click your profile or a card in the real page preview to edit that element. The dialog places its controls on the left and a live element preview on the right; on phones, the preview appears above the controls. Background and layout buttons open the corresponding page controls. Additional typography, gradient and surface options stay collapsed until needed.
+**Page themes**, **Card styles**, and **Fine tuning** share the top navigation. In Fine tuning, click your profile or a card in the interactive page preview to edit that element. The dialog places its controls on the left and a live element preview on the right; on phones, the preview appears above the controls. Background and layout buttons open the corresponding page controls. Additional typography, gradient and surface options stay collapsed until needed.
 
 For a selected card, choose **This card** to override its appearance or **Shared style** to update the common style. Individual overrides remain active when editing the shared style. **Reset to shared style** removes the selected card's overrides; **Use shared style on every card** clears all individual style overrides in the draft. Profile appearance controls use the same overrides as the Page editor. Hosted plan permissions still apply to advanced customization.
 

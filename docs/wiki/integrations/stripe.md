@@ -86,11 +86,11 @@ Use this installation with **test credentials**; no second installation is neede
 2. Create a fictional digital product, attach a harmless file, make it available and publish the Shop.
 3. Open the public `/shop`, start Checkout and use Stripe's test card `4242 4242 4242 4242`, any future expiry and a valid test CVC. See [Stripe testing](https://docs.stripe.com/testing).
 4. Confirm the paid receipt, download the actual file, open **Your purchases**, refresh and check mobile layout.
-5. Verify the real Checkout event was delivered to your endpoint. Check a discount code and, if used, a 100% discount.
-6. In the test Stripe environment, test partial/full refunds and the resulting access changes. For services, also test questionnaire and calendar behavior. Use mailboxes you control and a dedicated calendar event: Stripe test mode does not disable real email delivery or calendar bookings.
+5. Verify the Checkout event from the test purchase was delivered to your endpoint. Check a discount code and, if used, a 100% discount.
+6. In the test Stripe environment, test partial/full refunds and the resulting access changes. For services, also test questionnaire and calendar behavior. Use mailboxes you control and a dedicated calendar event: Stripe test mode does not disable email delivery or calendar bookings.
 7. Hide fictional products or unpublish before switching to live mode.
 
-Never use real card details in a test environment or simulate purchases with real cards in live mode. Test cards work only with test credentials. Changing the view in Stripe Dashboard alone does not change the credentials saved in OrbitPage.
+Never use live card details in a test environment or simulate purchases with payment cards in live mode. Test cards work only with test credentials. Changing the view in Stripe Dashboard alone does not change the credentials saved in OrbitPage.
 
 ## Go live on the same installation
 
@@ -99,7 +99,7 @@ Never use real card details in a test environment or simulate purchases with rea
 3. Create a live API key (`rk_live_…` or `sk_live_…`).
 4. Create a **live** webhook using the same URL and seven events described above. Copy its own `whsec_…` secret.
 5. In OrbitPage, replace **both** fields and select **Save and verify Stripe**. For server-managed settings, replace both environment variables, restart and select **Check status**.
-6. Confirm the intended account and live **ready and configured** status. Recheck the real catalog, policies and email before publishing.
+6. Confirm the intended account and live **ready and configured** status. Recheck the published catalog, policies and email before publishing.
 7. Disable the retired **test** destination in Stripe once testing is finished. For server-managed secrets, disable it **before** switching: OrbitPage does not retain the old environment secret.
 8. On the first legitimate live purchase, verify the paid order, customer access and successful live webhook delivery.
 
@@ -114,5 +114,5 @@ After live account verification succeeds, cleanup and credential activation comm
 
 - Old test receipt/customer links stop working. Files retained only for deleted test orders follow normal automatic cleanup; unpublish or hide test products yourself because the catalog is kept.
 - Invalid credentials, an inactive live account, a missing/reused test webhook secret or a failed database update leave test data intact. Actual webhook delivery still needs the check above.
-- Existing live or unclassified orders are never automatically deleted. After real orders exist, changing account or returning to test mode is blocked; rotating a key for the **same account and mode** preserves orders.
+- Existing live or unclassified orders are never automatically deleted. After live orders exist, changing account or returning to test mode is blocked; rotating a key for the **same account and mode** preserves orders.
 - Delayed test events signed with the previous dashboard-saved secret are acknowledged without changing live data. This does not apply to retired server-managed secrets.

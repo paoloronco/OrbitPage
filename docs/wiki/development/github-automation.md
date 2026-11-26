@@ -47,7 +47,7 @@ WebKit can complete the full suite and upload failure reports on slower runners.
 
 Mocker security checks exercise both dependency graphs in the Linux quality
 gate and a dedicated Windows job. They use temporary synthetic fixtures and
-verify native path boundaries plus generated JavaScript escaping over real
+verify native path boundaries plus generated JavaScript escaping over active
 local HTTP/WebSocket connections.
 
 Publication reuses main CI's `rolling-amd64` and `rolling-arm64` build caches, verifies both architectures, and creates the release if it does not exist. Tag pushes and manual publication for the same tag share a concurrency group.

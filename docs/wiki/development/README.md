@@ -8,7 +8,7 @@ Start with [Product requirements](./product-requirements.md) for expected behavi
 
 ## Run and test locally
 
-Follow [Development workflow](./Development.md) to install dependencies, run the frontend and API, and select the relevant checks. Use disposable local data for testing; never use a real customer's database or upload directory as a fixture.
+Follow [Development workflow](./Development.md) to install dependencies, run the frontend and API, and select the relevant checks. Use disposable local data for testing; never use a customer's database or upload directory as a fixture.
 
 ## Use the right contract
 

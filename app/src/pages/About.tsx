@@ -29,7 +29,7 @@ const coreFeatures = [
     icon: Server,
   },
   {
-    title: "A real admin panel",
+    title: "Website management dashboard",
     description: "Edit public page content, links, themes, privacy settings, users, analytics, and backups from one focused workspace.",
     icon: Palette,
   },

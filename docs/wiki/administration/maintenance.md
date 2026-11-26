@@ -211,7 +211,7 @@ curl -fsS --max-time 10 -o /dev/null http://127.0.0.1:8080/dashboard/profile
 sudo docker logs --tail 100 orbitpage
 ```
 
-The health response must contain `"status":"ok"` and the expected version. Then verify through the real HTTPS origin:
+The health response must contain `"status":"ok"` and the expected version. Then verify through the production HTTPS origin:
 
 1. the public page renders expected profile content and uploaded media;
 2. `/dashboard/profile` loads without asset or API errors;

@@ -1,6 +1,6 @@
-# Create a real-estate professional page
+# Create a property professional page
 
-Build a real-estate page with selected properties, local context and distinct viewing or valuation actions. Keep listings in their source system.
+Build a property page with selected properties, local context and distinct viewing or valuation actions. Keep listings in their source system.
 
 Part of the [documentation index](../README.md), under **Examples and use cases**.
 
