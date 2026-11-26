@@ -75,7 +75,7 @@ const secondaryNavigation = ['Newsletter', 'Team', 'Account', 'Edition'];
 
 const navigationIcons = {
   'Site editor': 'person-outline',
-  'AI Assistant': 'auto-awesome-outlined',
+  'AI Assistant': 'smart-toy-outlined',
   Theme: 'palette-outlined',
   Publish: 'share-outlined',
   Backup: 'storage-outlined',
@@ -391,11 +391,8 @@ test('matches the SaaS dashboard shell and keeps hosted-only surfaces explicit',
   await page.setViewportSize({ width: 1366, height: 768 });
   await openAuthenticatedAdmin(page);
 
-  const primaryLabels = await page.locator('.admin-dashboard-nav-page [data-onboarding$="-tab"]').allTextContents();
-  const secondaryLabels = await page.locator('.admin-dashboard-nav-workspace button').allTextContents();
-
-  expect(primaryLabels.map((label) => label.trim())).toEqual(primaryNavigation);
-  expect(secondaryLabels.map((label) => label.trim())).toEqual(secondaryNavigation);
+  await expect(page.locator('.admin-dashboard-nav-page [data-onboarding$="-tab"]')).toHaveText(primaryNavigation);
+  await expect(page.locator('.admin-dashboard-nav-workspace button')).toHaveText(secondaryNavigation);
 
   for (const [label, icon] of Object.entries(navigationIcons)) {
     const navButton = page.getByRole('button', { name: label, exact: true });
