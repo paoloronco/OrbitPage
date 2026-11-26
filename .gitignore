@@ -65,25 +65,13 @@ coverage/
 output/
 app/playwright-report/
 app/test-results/
-app/e2e-data/
+app/e2e-data*/
 app/lint-report.json
-scripts/*
-!scripts/README.md
-!scripts/check-markdown-links.mjs
-!scripts/check-markdown-links.test.mjs
-!scripts/check-tracked-runtime-data.mjs
-!scripts/orbitpage-update.sh
-!scripts/orbitpage-update.py
-!scripts/test-updater.py
-!scripts/test-updater-docker.py
-!scripts/test-installer.sh
-!scripts/test-pve-installer.sh
-!scripts/test-docker-entrypoint.sh
-!scripts/test-docker-context.mjs
-docs/superpowers/
 
 # Local private workspace
 .local/
+.codex-tmp/
+.playwright-mcp/
 
 # Temporary files
 *.tmp

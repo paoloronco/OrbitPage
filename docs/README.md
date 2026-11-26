@@ -42,7 +42,7 @@ For the managed service, use [OrbitPage's online documentation](https://orbitpag
 | [wiki/development/](./wiki/development/README.md) | Product contracts, architecture, design, API boundaries and contributor workflows |
 | [screenshots/](./screenshots/README.md) | Screenshot provenance and published documentation media |
 | [brand/](./brand/) | Approved project artwork and exports; usage rules are in the [design system](./wiki/development/design-system.md#brand) |
-| [repository-maintenance.md](./repository-maintenance.md) | Maintainer review criteria and maintenance backlog |
+| [Development maintenance](./wiki/development/repository-maintenance.md) | Maintainer review criteria and maintenance backlog |
 
 The repository [README](../README.md) owns the product overview and quick start. The [application README](../app/README.md) maps source code and commands; [Scripts](../scripts/README.md) explains installer, updater and verification helpers. Security reporting follows [SECURITY.md](../SECURITY.md).
 

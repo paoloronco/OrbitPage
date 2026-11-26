@@ -18,6 +18,20 @@ app/
 
 Repository-level files contain Docker, CI, release, and documentation configuration.
 
+## Repository organization
+
+Keep application code under `app/`, contributor and installer automation under
+`scripts/`, and guides under their task category in `docs/wiki/`. Development
+maintenance belongs with the other development guides. Use lowercase kebab-case
+for new guide/script names; retain the established root contracts, React
+component names and published compatibility-guide paths.
+
+Put experiments, diagnostics and disposable source checkouts in `.local/`.
+Keep test databases, reports, dependencies and build output ignored. New scripts
+are visible to Git by default; add a specific output exclusion instead of hiding
+the whole scripts directory. The tracked-file guard rejects local runtime data
+and temporary artifacts before push and in CI.
+
 ## Requirements
 
 - Node.js `^22.23.4`, `^24.22.1` or `^26.12.1`
