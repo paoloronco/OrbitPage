@@ -25,7 +25,7 @@ the disposable runner. The quality workflow has only `contents: read`, does not
 persist checkout credentials and never commits, pushes, creates issues, tags or
 publishes a release. The existing Gitea mirror remains a separate workflow.
 
-Review the [maintenance backlog](./repository-maintenance.md) when a result
+Review the [maintenance backlog](../../maintainers/repository-maintenance.md) when a result
 needs action. No-change runs require no repository update. GitHub may delay
 scheduled runs and disables public-repository schedules after 60 days without
 repository activity; check the Actions history and re-enable a disabled schedule

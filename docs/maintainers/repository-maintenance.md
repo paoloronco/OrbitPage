@@ -1,7 +1,7 @@
 # Repository maintenance
 
 This is the maintainer's working backlog for the OSS repository. It is separate
-from [installation maintenance](../administration/maintenance.md) and does not
+from [installation maintenance](../wiki/administration/maintenance.md) and does not
 promise a commit or release every week. Shared product behavior belongs here;
 hosted-only changes belong in the managed-service repository.
 
@@ -9,10 +9,10 @@ hosted-only changes belong in the managed-service repository.
 
 - Reserve two sessions of 30–45 minutes per week. Select one bounded task per
   session according to evidence, urgency and the available time.
-- Review the latest [weekly checks](./github-automation.md#weekly-maintenance-checks)
+- Review the latest [weekly checks](../wiki/development/github-automation.md#weekly-maintenance-checks)
   and existing reports before changing code. Deduplicate findings and verify
   them against current `main`.
-- Fix urgent security and data-loss problems immediately. Follow [SECURITY.md](../../../SECURITY.md)
+- Fix urgent security and data-loss problems immediately. Follow [SECURITY.md](../../SECURITY.md)
   for private vulnerability reporting; do not copy sensitive findings into this
   public backlog or public issues.
 - If a review finds nothing actionable, make no change. Never split a complete
@@ -30,11 +30,11 @@ hosted-only changes belong in the managed-service repository.
    existing implementation or tests do not already address it.
 3. Keep one coherent change, including its regression test and documentation
    when applicable. Preserve data, routes, schemas and compatibility.
-4. Run the relevant [checks](../../../CONTRIBUTING.md#checks); record their exact results
+4. Run the relevant [checks](../../CONTRIBUTING.md#checks); record their exact results
    and any unverified environment. Do not weaken a check to make a change pass.
 5. Use a specific `type(scope): description` subject. Explain the evidence and
    verification in the body when they are not obvious from the diff.
-6. Apply the existing [release rules](../../../CONTRIBUTING.md#release-notes): runtime,
+6. Apply the existing [release rules](../../CONTRIBUTING.md#release-notes): runtime,
    schema, installer and deployment changes require green main CI and a patch
    release; documentation-only and test-only changes do not require a release.
 
@@ -57,8 +57,8 @@ session, document its scope and schedule the complete change separately.
   retain the run URL, tested SHA and actionable findings; do not change package
   versions or thresholds merely to obtain a green run.
 - [ ] **M02 — Verify the source quick start in a clean environment.** Follow
-  [Run from source](../../../README.md#run-from-source) and
-  [Development workflow](./Development.md) with temporary data.
+  [Run from source](../../README.md#run-from-source) and
+  [Development workflow](../wiki/development/Development.md) with temporary data.
   Check initial setup, `/health`, public page and restart persistence. Done:
   record the environment and outcomes; correct only reproduced discrepancies.
 
@@ -111,4 +111,4 @@ commit/release if any. A completed review may say "no change needed" with its
 evidence; consolidate such outcomes in the next useful backlog update instead
 of creating a commit for each check. Never mark future tasks complete in advance.
 
-Return to [Development](./README.md).
+Return to [Development](../wiki/development/README.md).
