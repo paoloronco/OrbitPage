@@ -1,4 +1,4 @@
-import type { BuilderConfig, ConsentConfig } from './consent-manager';
+import type { ConsentConfig } from './consent-manager';
 import { DEFAULT_HARDCODED } from './consent-manager';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 

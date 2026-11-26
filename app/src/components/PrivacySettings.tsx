@@ -350,12 +350,10 @@ function LegalPoliciesForm({
 }
 
 function CategorySection({
-  cat,
   label,
   catCfg,
   onChange,
 }: {
-  cat: string;
   label: string;
   catCfg: { enabled: boolean; title: string; description: string };
   onChange: (updates: Partial<typeof catCfg>) => void;
@@ -512,7 +510,6 @@ function HardcodedForm({
         ).map(([cat, label]) => (
           <CategorySection
             key={cat}
-            cat={cat}
             label={label}
             catCfg={cfg.categories[cat]}
             onChange={(u) => updateCat(cat, u)}

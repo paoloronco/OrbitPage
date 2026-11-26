@@ -28,8 +28,10 @@ test('opts existing cards into copying and preserves the choice through save, ex
 
     const exported = await (await page.request.get('/api/links/export', { headers })).json();
     expect(exported[0].showCopyButton).toBe(true);
+    expect(exported[0].hideUrl).toBe(true);
     expect((await page.request.post('/api/links/import', { headers, data: exported })).ok()).toBeTruthy();
     await page.goto('/');
+    await expect(page.locator('[data-card-content-layout-item="url"]')).toHaveCount(0);
     await page.evaluate(() => Object.defineProperty(navigator, 'clipboard', { configurable: true, value: { writeText: async (value: string) => { document.documentElement.dataset.copiedUrl = value; } } }));
     await page.getByRole('button', { name: 'Copy link', exact: true }).click();
     await expect(page.locator('html')).toHaveAttribute('data-copied-url', 'https://example.com');

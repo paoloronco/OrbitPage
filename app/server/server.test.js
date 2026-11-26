@@ -1460,6 +1460,16 @@ describe('API Endpoints', () => {
     expect((await request(app).get('/api/links/export')).status).toBe(200);
   });
 
+  it('GET /api/links/export preserves hidden URL preferences for a later import', async () => {
+    vi.mocked(dbAll).mockResolvedValueOnce([
+      { id: 'hidden', title: 'Hidden URL', url: 'https://example.com/hidden', hide_url: 1 },
+      { id: 'visible', title: 'Visible URL', url: 'https://example.com/visible', hide_url: 0 },
+    ]);
+    const response = await request(app).get('/api/links/export');
+    expect(response.status).toBe(200);
+    expect(response.body).toMatchObject([{ hideUrl: true }, { hideUrl: false }]);
+  });
+
   it('PUT /api/theme rejects CSS URLs while accepting normal colors', async () => {
     expect((await request(app).put('/api/theme').send({ background: 'url(http://127.0.0.1/admin)' })).status).toBe(400);
     expect(dbRun).not.toHaveBeenCalled();

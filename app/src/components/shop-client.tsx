@@ -1,4 +1,5 @@
 "use client";
+import { ShopRequestError } from "@/lib/shop-request-error";
 
 import { ShopDeviceFrame } from "./ShopDeviceFrame";
 import { usePreviewDeviceSlot } from "../lib/use-preview-device-slot";
@@ -216,16 +217,6 @@ function storefrontCopy(tr: PhraseTranslator) {
     newsletterDescription: tr("Get useful updates by email.", "Ricevi aggiornamenti utili via email."),
     subscribe: tr("Subscribe", "Iscriviti"),
   };
-}
-
-export class ShopRequestError extends Error {
-  readonly code: string;
-
-  constructor(message: string, code = "SHOP_REQUEST_FAILED") {
-    super(message);
-    this.name = "ShopRequestError";
-    this.code = code;
-  }
 }
 
 // Shared Button utility classes; browser regression checks parity with the OSS variants.

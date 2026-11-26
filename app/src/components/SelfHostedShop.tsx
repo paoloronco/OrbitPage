@@ -1,4 +1,5 @@
-import ShopClient, { ShopRequestError, type ShopClientProps, type ShopRequest } from './shop-client';
+import ShopClient, { type ShopClientProps, type ShopRequest } from './shop-client';
+import { ShopRequestError } from '@/lib/shop-request-error';
 import { shopRequest } from '../lib/api-client';
 import { useAppI18n } from '../lib/i18n';
 

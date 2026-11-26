@@ -3599,6 +3599,7 @@ app.get('/api/links/export', authenticateToken, requirePermission('links:write')
       description: link.description || '',
       url: link.url || '',
       showCopyButton: link.show_copy_button === 1,
+      hideUrl: link.hide_url === 1,
       type: link.type || 'link',
       icon: link.icon || null,
       iconType: link.icon_type || null,

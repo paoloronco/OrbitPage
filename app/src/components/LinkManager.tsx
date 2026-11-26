@@ -1321,6 +1321,8 @@ export const LinkManager = ({
               ) : (
                 <LinkCard
                   link={asNativeShopLink(link)}
+                  videoUploadsEnabled={videoUploadsEnabled}
+                  maxVideoUploadBytes={maxVideoUploadBytes}
                   onUpdate={updateLink}
                   onPreview={updateLinkPreview}
                   onPreparingChange={updatePreparingLink}

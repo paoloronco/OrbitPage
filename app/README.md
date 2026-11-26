@@ -192,7 +192,7 @@ Run these from `app/`. The authoritative definitions are in [package.json](./pac
 | `npm run preview` | Preview the built frontend with Vite; this does not start the Express API. |
 | `npm run install:server` | Install backend dependencies. |
 | `npm run install:hooks` | Configure the repository's tracked pre-push hook. |
-| `npm run lint` / `npm run typecheck` | Run ESLint / frontend TypeScript checking. |
+| `npm run lint` / `npm run typecheck` | Run ESLint / frontend TypeScript checking, including unused imports, locals and parameters. |
 | `npm test` | Run the frontend Vitest watcher. |
 | `npm run test:unit` | Run frontend and backend Vitest suites once. |
 | `npm run test:security:mocker` | Check both installed mocker dependency graphs through isolated local HTTP/WebSocket fixtures, including native Windows traversal. |
