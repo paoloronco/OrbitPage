@@ -83,7 +83,7 @@ export default function NewsletterSubscriberTable({ subscribers, total, action, 
       {filtered && <button className="button secondary compact" type="button" onClick={resetFilters}>{tr("Clear filters", "Azzera filtri")}</button>}
     </div>
     {total > subscribers.length && <p className="newsletter-subscriber-scope" role="note">
-      <strong>{subscribers.length} / {total}</strong>{" · "}{tr("Only the most recently updated subscribers are loaded. Search, filters and sorting apply to this list.", "Sono caricati solo gli iscritti aggiornati più di recente. Ricerca, filtri e ordinamento si applicano a questo elenco.")}
+      <strong>{subscribers.length} / {total}</strong>{" — "}{tr("Only the most recently updated subscribers are loaded. Search, filters and sorting apply to this list.", "Sono caricati solo gli iscritti aggiornati più di recente. Ricerca, filtri e ordinamento si applicano a questo elenco.")}
     </p>}
     {rows.length ? <div className="newsletter-table-wrap" tabIndex={0} role="region" aria-label={tr("Subscriber list", "Elenco iscritti")}>
       <table>

@@ -224,9 +224,9 @@ export const TextCard = ({ link, onUpdate, onPreview, onPreparingChange, onDelet
         {(link.status && link.status !== 'live') || link.campaignName || link.startDate || link.startTime || link.endDate || link.endTime ? (
           <div className="mt-2 text-xs text-slate-500">
             {(link.status || 'live').toUpperCase()}
-            {link.campaignName ? ` · ${link.campaignName}` : ''}
+            {link.campaignName ? ` — ${link.campaignName}` : ''}
             {(link.startDate || link.startTime || link.endDate || link.endTime)
-              ? ` · ${link.startDate || 'any'} ${link.startTime || ''} -> ${link.endDate || 'any'} ${link.endTime || ''}`.trim()
+              ? ` — ${link.startDate || 'any'} ${link.startTime || ''} -> ${link.endDate || 'any'} ${link.endTime || ''}`.trim()
               : ''}
           </div>
         ) : null}
@@ -741,9 +741,9 @@ export const TextCard = ({ link, onUpdate, onPreview, onPreparingChange, onDelet
               {(link.status && link.status !== 'live') || link.campaignName || link.startDate || link.startTime || link.endDate || link.endTime ? (
                 <span className="mb-2 block text-xs text-muted-foreground">
                   {(link.status || 'live').toUpperCase()}
-                  {link.campaignName ? ` · ${link.campaignName}` : ''}
+                  {link.campaignName ? ` — ${link.campaignName}` : ''}
                   {(link.startDate || link.startTime || link.endDate || link.endTime)
-                    ? ` · ${link.startDate || 'any'} ${link.startTime || ''} -> ${link.endDate || 'any'} ${link.endTime || ''}`.trim()
+                    ? ` — ${link.startDate || 'any'} ${link.startTime || ''} -> ${link.endDate || 'any'} ${link.endTime || ''}`.trim()
                     : ''}
                 </span>
               ) : null}

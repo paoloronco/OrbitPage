@@ -49,7 +49,7 @@ export function ShopPurchaseFiles({ files, remaining, expiresAt }: {
       <div><strong>{file.filename}</strong><small>{file.sizeBytes > 0 ? file.sizeBytes < 1024 * 1024 ? `${Math.ceil(file.sizeBytes / 1024)} KB` : `${(file.sizeBytes / (1024 * 1024)).toFixed(1)} MB` : "Digital file"}</small></div>
       {available && <a className="shop-purchase-button primary" href={file.url} download={file.filename} aria-label={`Download ${file.filename}`}><Download size={17} aria-hidden="true" /> Download</a>}
     </div>)}
-    <p className="shop-purchase-note">{available ? <>{remaining} downloads remaining{expiresAt && <> · Available until {new Date(expiresAt).toLocaleDateString("en-US", { dateStyle: "medium" })}</>}</>
+    <p className="shop-purchase-note">{available ? <>{remaining} downloads remaining{expiresAt && <> — Available until {new Date(expiresAt).toLocaleDateString("en-US", { dateStyle: "medium" })}</>}</>
       : <>{expired ? "Your download link has expired." : "Download limit reached."} Contact the seller if you need another copy.</>}</p>
   </div>;
 }

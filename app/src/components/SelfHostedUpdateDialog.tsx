@@ -115,7 +115,7 @@ export function SelfHostedUpdateDialog({ requestedVersion, canInstall, onClose }
           : job?.state === 'queued' ? tr('Checking the release…', 'Verifica della versione…')
           : job?.state === 'running' ? tr('Installing update…', 'Installazione aggiornamento…')
           : awaitingConfirmation ? tr('Update start has not been confirmed', 'Avvio aggiornamento non confermato')
-          : job?.state === 'completed' ? tr(`Update completed · v${job.version}`, `Aggiornamento completato · v${job.version}`)
+          : job?.state === 'completed' ? tr(`Update completed — v${job.version}`, `Aggiornamento completato — v${job.version}`)
           : job?.state === 'failed' ? tr('Update failed', 'Aggiornamento non riuscito')
           : connectionError ? tr('Host updater unavailable', 'Updater sul server non disponibile')
           : status?.enabled ? tr(`Ready to install v${requestedVersion}`, `Pronto per installare v${requestedVersion}`)

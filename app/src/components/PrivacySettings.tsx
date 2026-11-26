@@ -557,8 +557,8 @@ function HardcodedForm({
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="equal">{tr("Equal weight (Manage · Reject · Accept)", "Stessa rilevanza (Gestisci · Rifiuta · Accetta)")}</SelectItem>
-              <SelectItem value="reject-first">{tr("Reject first (Reject · Manage · Accept)", "Rifiuta prima (Rifiuta · Gestisci · Accetta)")}</SelectItem>
+              <SelectItem value="equal">{tr("Equal weight (Manage — Reject — Accept)", "Stessa rilevanza (Gestisci — Rifiuta — Accetta)")}</SelectItem>
+              <SelectItem value="reject-first">{tr("Reject first (Reject — Manage — Accept)", "Rifiuta prima (Rifiuta — Gestisci — Accetta)")}</SelectItem>
             </SelectContent>
           </Select>
         </FieldRow>

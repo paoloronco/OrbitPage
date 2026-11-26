@@ -90,14 +90,14 @@ export function AiPageComparisonPreview({
           <h3>{tr("Draft Shop products", "Prodotti Shop in bozza")}</h3>
           {after.shopProducts.map(product => <article key={product.productId}>
             <strong>{product.title}</strong><span>{amount(product.priceCents, after.shopCurrency)}</span>
-            <p>{product.description}</p><small>{tr("Draft · not available for purchase", "Bozza · non acquistabile")}</small>
+            <p>{product.description}</p><small>{tr("Draft — not available for purchase", "Bozza — non acquistabile")}</small>
           </article>)}
         </div>}
         {!!menuItems.length && <div className="ai-catalog-preview">
           <h3>{tr("New menu items", "Nuovi piatti nel menu")}</h3>
           {menuItems.map(item => <article key={item.id}>
             <strong>{item.name}</strong><span>{amount(item.priceMinor, after.menu?.currency)}</span>
-            <p>{item.description}</p><small>{after.menu?.sections.find(section => section.id === item.sectionId)?.name}{!after.menu?.enabled && tr(" · Menu remains private", " · Il menu resta privato")}</small>
+            <p>{item.description}</p><small>{after.menu?.sections.find(section => section.id === item.sectionId)?.name}{!after.menu?.enabled && tr(" — Menu remains private", " — Il menu resta privato")}</small>
           </article>)}
         </div>}
         {showPage && <>

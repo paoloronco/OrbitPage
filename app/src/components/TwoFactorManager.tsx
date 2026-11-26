@@ -66,7 +66,6 @@ export function TwoFactorManager({ username = "admin" }: { username?: string }) 
     </div>
 
     {status?.enabled && <div className="mfa-status enabled">
-      <span className="mfa-status-dot" aria-hidden="true" />
       <div><strong>{tr("Two-factor authentication is active", "Autenticazione a due fattori attiva")}</strong><span>{status.recoveryCodesRemaining} {tr("recovery codes remaining", "codici di recupero rimanenti")}</span></div>
     </div>}
 

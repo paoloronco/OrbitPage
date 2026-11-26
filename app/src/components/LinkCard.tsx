@@ -625,9 +625,9 @@ export const LinkCard = ({
               {(link.status && link.status !== 'live') || link.campaignName || link.startDate || link.startTime || link.endDate || link.endTime ? (
                 <span>
                   {(link.status || 'live').toUpperCase()}
-                  {link.campaignName ? ` · ${link.campaignName}` : ''}
+                  {link.campaignName ? ` — ${link.campaignName}` : ''}
                   {(link.startDate || link.startTime || link.endDate || link.endTime)
-                    ? ` · ${link.startDate || 'any'} ${link.startTime || ''} -> ${link.endDate || 'any'} ${link.endTime || ''}`.trim()
+                    ? ` — ${link.startDate || 'any'} ${link.startTime || ''} -> ${link.endDate || 'any'} ${link.endTime || ''}`.trim()
                     : ''}
                 </span>
               ) : null}
@@ -716,7 +716,7 @@ export const LinkCard = ({
           </h3>
           {(contactData.role || contactData.title) && (
             <p className="text-sm text-muted-foreground mt-1">
-              {[contactData.role, contactData.title].filter(Boolean).join(' · ')}
+              {[contactData.role, contactData.title].filter(Boolean).join(' — ')}
             </p>
           )}
           {contactRows.length > 0 && (
@@ -805,8 +805,8 @@ export const LinkCard = ({
           <p className="text-sm mt-1">
             {[
               eventData.date ? `Date: ${eventData.date}` : null,
-              eventData.time ? `· ${eventData.time}` : null,
-              eventData.location ? `· ${eventData.location}` : null,
+              eventData.time ? `— ${eventData.time}` : null,
+              eventData.location ? `— ${eventData.location}` : null,
             ].filter(Boolean).join(' ')}
           </p>
           {eventData.notes && <p className="text-sm text-muted-foreground mt-1">{eventData.notes}</p>}
@@ -1287,7 +1287,7 @@ export const LinkCard = ({
                                 }}>
                                   <SelectTrigger className="bg-white text-black"><SelectValue /></SelectTrigger>
                                   <SelectContent className="admin-content-select">
-                                    {!currentDestination && <SelectItem value={item.path}>{tr("Unavailable", "Non disponibile")} · {item.path}</SelectItem>}
+                                    {!currentDestination && <SelectItem value={item.path}>{tr("Unavailable", "Non disponibile")} — {item.path}</SelectItem>}
                                     {selectableDestinations.map((destination) => <SelectItem key={destination.id} value={destination.path}>{destination.title}</SelectItem>)}
                                   </SelectContent>
                                 </Select>
@@ -1659,7 +1659,7 @@ export const LinkCard = ({
                         <Select value={embedData.consentCategory || 'marketing'} onValueChange={(value: EmbedConsentCategory) => updateEmbedData('consentCategory', value)}>
                           <SelectTrigger id={`link-card-consent-category-${link.id}`} className="h-9 bg-white text-black"><SelectValue /></SelectTrigger>
                           <SelectContent className="admin-content-select">
-                            <SelectItem value="necessary">Necessary · load immediately</SelectItem>
+                            <SelectItem value="necessary">Necessary — load immediately</SelectItem>
                             <SelectItem value="preferences">Preferences</SelectItem>
                             <SelectItem value="analytics">Analytics</SelectItem>
                             <SelectItem value="marketing">Marketing</SelectItem>
@@ -2116,9 +2116,9 @@ export const LinkCard = ({
               {(link.status && link.status !== 'live') || link.campaignName || link.startDate || link.startTime || link.endDate || link.endTime ? (
                 <span className="mt-1 block text-xs text-muted-foreground">
                   {(link.status || 'live').toUpperCase()}
-                  {link.campaignName ? ` · ${link.campaignName}` : ''}
+                  {link.campaignName ? ` — ${link.campaignName}` : ''}
                   {(link.startDate || link.startTime || link.endDate || link.endTime)
-                    ? ` · ${link.startDate || 'any'} ${link.startTime || ''} -> ${link.endDate || 'any'} ${link.endTime || ''}`.trim()
+                    ? ` — ${link.startDate || 'any'} ${link.startTime || ''} -> ${link.endDate || 'any'} ${link.endTime || ''}`.trim()
                     : ''}
                 </span>
               ) : null}

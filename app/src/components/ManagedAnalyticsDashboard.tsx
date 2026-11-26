@@ -56,7 +56,7 @@ function Ranking({
     {items.length ? <div>{items.slice(0, 6).map((item) => <div className="managed-analytics-rank" key={item.label}>
       <span>
         <b title={item.label}>{item.label}</b>
-        <em>{item.value.toLocaleString()} {denominator > 0 ? `· ${Math.round(item.value / denominator * 100)}%` : ''}</em>
+        <em>{item.value.toLocaleString()} {denominator > 0 ? `— ${Math.round(item.value / denominator * 100)}%` : ''}</em>
       </span>
       <i><span style={{ width: `${Math.max(4, item.value / maximum * 100)}%` }} /></i>
     </div>)}</div> : <p>{empty}</p>}

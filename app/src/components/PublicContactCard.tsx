@@ -78,7 +78,7 @@ export const PublicContactCard = ({ link }: PublicContactCardProps) => {
                   ...(link.descriptionFontFamily ? { fontFamily: link.descriptionFontFamily } : {}),
                 }}
               >
-                {[contact.role, contact.title].filter(Boolean).join(" · ")}
+                {[contact.role, contact.title].filter(Boolean).join(" — ")}
               </div>
             ) : null}
           </div>

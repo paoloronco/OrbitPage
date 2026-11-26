@@ -88,7 +88,7 @@ export function SelfHostedInstanceDetails({ canManageInstance, version, onInstal
               <div>{([
                 ['api', 'API'], ['database', 'SQLite'], ['dataDirectory', 'DATA_DIR'], ['uploads', tr('Uploads', 'Upload')],
               ] as const).map(([key, label]) => <span className={`instance-service ${instance?.services[key] ? 'is-ok' : 'is-down'}`} key={key}>
-                <span aria-hidden="true" className="instance-service-dot" />{label}: {!instance ? tr('Checking…', 'Verifica…') : instance.services[key] ? tr('Ready', 'Attivo') : tr('Unavailable', 'Non disponibile')}
+                {label}: {!instance ? tr('Checking…', 'Verifica…') : instance.services[key] ? tr('Ready', 'Attivo') : tr('Unavailable', 'Non disponibile')}
               </span>)}</div>
             </div>
           </section>}

@@ -50,7 +50,7 @@ export default function RecentSignIns({ load, tr }: {
         {error && <div role="alert"><p>{tr('Could not load sign-ins.', 'Impossibile caricare gli accessi.')}</p><button className="button secondary" type="button" onClick={() => setAttempt((value) => value + 1)}>{tr('Try again', 'Riprova')}</button></div>}
         <div className="audit-log-table-wrap" tabIndex={0} role="region" aria-label={tr('Recent sign-ins', 'Ultimi accessi')} aria-busy={loading}>
           <table className="audit-log-table"><thead><tr><th scope="col">{tr('Date and time', 'Data e ora')}</th><th scope="col">{tr('Method', 'Metodo')}</th><th scope="col">{tr('Device', 'Dispositivo')}</th></tr></thead><tbody>
-            {events.map((event) => <tr key={event.id}><td><time dateTime={event.createdAt}>{new Date(event.createdAt).toLocaleString()}</time>{event.current && <small className="sign-in-current">{tr('Current sign-in', 'Accesso attuale')}</small>}</td><td>{methodLabel(event.method)}</td><td>{event.device || tr('Not available', 'Non disponibile')}</td></tr>)}
+            {events.map((event) => <tr key={event.id}><td><time dateTime={event.createdAt}>{new Date(event.createdAt).toLocaleString()}</time>{event.current && <small className="sign-in-current">{tr('Current sign-in', 'Accesso attuale')}</small>}</td><td>{methodLabel(event.method)}</td><td>{event.device?.replaceAll(' · ', ' — ') || tr('Not available', 'Non disponibile')}</td></tr>)}
             {!events.length && <tr><td className="audit-empty" colSpan={3}>{loading ? tr('Loading sign-ins…', 'Caricamento accessi…') : error ? '—' : tr('No sign-ins recorded yet.', 'Nessun accesso ancora registrato.')}</td></tr>}
           </tbody></table>
         </div>

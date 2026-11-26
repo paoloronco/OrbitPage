@@ -711,7 +711,7 @@ export const ProfileSection = ({
                   />
                   <span>
                     <strong className="block text-sm text-slate-950">{tr("Theme card color", "Colore card del tema")}</strong>
-                    <small className="text-xs text-slate-500">{theme.profileCard.background} · {theme.profileCard.backgroundSecondary}</small>
+                    <small className="text-xs text-slate-500">{theme.profileCard.background} — {theme.profileCard.backgroundSecondary}</small>
                   </span>
                 </div>
               )}

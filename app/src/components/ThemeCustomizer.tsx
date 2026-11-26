@@ -339,10 +339,10 @@ export const ThemeCustomizer = ({
                 <div className="flex items-center justify-between gap-3 px-1 text-[11px] font-bold uppercase tracking-[0.12em]">
                   <span className="inline-flex items-center gap-1.5 text-slate-600">
                     <i className="h-2 w-2 rounded-full bg-slate-400" aria-hidden="true" />
-                    {tr("Before · saved", "Prima · salvato")}
+                    {tr("Before — saved", "Prima — salvato")}
                   </span>
                   <span className="inline-flex items-center gap-1.5 text-blue-700">
-                    {tr("After · draft", "Dopo · bozza")}
+                    {tr("After — draft", "Dopo — bozza")}
                     <i className="h-2 w-2 rounded-full bg-blue-600" aria-hidden="true" />
                   </span>
                 </div>

@@ -611,7 +611,7 @@ export default function NewsletterWorkspaceView({
               <div>
                 <h3>Sender and delivery</h3>
               </div>
-              <span className={`newsletter-verified ${smtpTestFailed ? "failed" : data.settings.verifiedAt ? "connected" : "pending"}`} role="status" aria-label={smtpTestFailed ? "Connection failed" : data.settings.verifiedAt ? "Connection working" : "Connection not tested"} title={smtpTestFailed ? "Connection failed. Check your settings and test again." : data.settings.verifiedAt ? "Connection working at the last successful test." : "Test the connection to check your account."}><span aria-hidden="true">{smtpTestFailed ? "×" : data.settings.verifiedAt ? "✓" : "•"}</span></span>
+              <span className={`newsletter-verified ${smtpTestFailed ? "failed" : data.settings.verifiedAt ? "connected" : "pending"}`} role="status" aria-label={smtpTestFailed ? "Connection failed" : data.settings.verifiedAt ? "Connection working" : "Connection not tested"} title={smtpTestFailed ? "Connection failed. Check your settings and test again." : data.settings.verifiedAt ? "Connection working at the last successful test." : "Test the connection to check your account."}><span aria-hidden="true">{smtpTestFailed ? "×" : data.settings.verifiedAt ? "✓" : "—"}</span></span>
             </header>
             <div className="newsletter-form-grid">
               <section className="newsletter-settings-group wide">
@@ -644,9 +644,9 @@ export default function NewsletterWorkspaceView({
                   }
                   value={smtp.port}
                 >
-                  <option value={465}>465 · TLS</option>
-                  <option value={587}>587 · STARTTLS</option>
-                  <option value={2525}>2525 · STARTTLS</option>
+                  <option value={465}>465 — TLS</option>
+                  <option value={587}>587 — STARTTLS</option>
+                  <option value={2525}>2525 — STARTTLS</option>
                 </select>
               </label>
               <label className="field">

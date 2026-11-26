@@ -282,7 +282,7 @@ function PreferencesModal({
                   {cfg.texts.privacyPolicyLinkText || 'Privacy policy'}
                 </a>
               )}
-              {privacyPolicyUrl && cookiePolicyUrl && <span> · </span>}
+              {privacyPolicyUrl && cookiePolicyUrl && <span> — </span>}
               {cookiePolicyUrl && (
                 <a href={cookiePolicyUrl} target="_blank" rel="noopener noreferrer"
                   style={{ color: colors.accent, textDecoration: 'none' }}>
@@ -400,7 +400,7 @@ function BannerBody({ cfg, colors, onAcceptAll, onRejectAll, onOpenPrefs, hasOpt
                   {cfg.texts.privacyPolicyLinkText || 'Privacy policy'}
                 </a>
               )}
-              {privacyPolicyUrl && cookiePolicyUrl && <span> · </span>}
+              {privacyPolicyUrl && cookiePolicyUrl && <span> — </span>}
               {cookiePolicyUrl && (
                 <a href={cookiePolicyUrl} target="_blank" rel="noopener noreferrer"
                   style={{ color: colors.accent, textDecoration: 'underline' }}>

@@ -15,7 +15,6 @@ export function UnderConstruction() {
         </div>
 
         <div className="orbitpage-construction-status">
-          <span aria-hidden="true" />
           Installation ready
         </div>
 

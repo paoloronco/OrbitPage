@@ -1212,7 +1212,7 @@ const buildNoScriptPublicContent = (profile, links, origin, req) => {
     .map(([url, label]) => {
       const href = toAbsoluteHttpUrl(url?.startsWith('/') ? withRequestBasePath(req, url) : url, origin);
       return href ? `<a href="${escapeHtml(href)}">${label}</a>` : '';
-    }).filter(Boolean).join(' · ');
+    }).filter(Boolean).join(' — ');
   return `<noscript><main><h1>${escapeHtml(title)}</h1>${bio ? `<p>${escapeHtml(bio)}</p>` : ''}${items ? `<ul>${items}</ul>` : ''}${policies ? `<nav aria-label="Policies">${policies}</nav>` : ''}</main></noscript>`;
 };
 

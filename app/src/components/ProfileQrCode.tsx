@@ -262,7 +262,7 @@ export function ProfileQrCode({ menu = createDefaultMenu(), subpages = [], readO
               <SlidersHorizontal className="h-4 w-4 text-blue-600" aria-hidden="true" />
               <span className="min-w-0 flex-1">
                 <span className="block">{tr("Style and export quality", "Stile e qualità di esportazione")}</span>
-                <span className="mt-0.5 block text-[10px] font-normal text-slate-500">{settings.size}px · {settings.correction}</span>
+                <span className="mt-0.5 block text-[10px] font-normal text-slate-500">{settings.size}px — {settings.correction}</span>
               </span>
               <ChevronDown className="h-4 w-4 transition-transform group-open:rotate-180" aria-hidden="true" />
             </summary>

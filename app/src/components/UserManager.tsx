@@ -336,7 +336,7 @@ export const UserManager = ({ currentUsername }: { currentUsername?: string }) =
                   <span className="team-member-avatar" aria-hidden="true">{u.username.slice(0, 1)}</span>
                   <div className="team-member-identity">
                     <strong>{u.username}{u.username === currentUsername ? ` (${tr("you", "tu")})` : ''}</strong>
-                    <span>Local account · created {new Date(u.created_at).toLocaleDateString(locale)}</span>
+                    <span>Local account — created {new Date(u.created_at).toLocaleDateString(locale)}</span>
                   </div>
                   {isAdmin ? (
                     <span className={`team-role-badge ${roleKey}`}>{roleLabel}</span>

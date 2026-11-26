@@ -19,7 +19,7 @@ export function ShopStripeAccount({ request, dashboardUrl }: { request: ShopRequ
   }, [request]);
   useEffect(() => { const controller = new AbortController(); void load(controller.signal); return () => controller.abort(); }, [load]);
   return <section aria-label="Stripe account overview" className="shop-stripe-overview">
-    <header className="shop-stripe-overview-heading"><div><h4>{data?.accountName || "Connected Stripe account"}</h4>{data && <small>{data.accountId} · {data.livemode ? "Live mode" : "Test mode"}</small>}</div><button aria-label="Refresh Stripe account" className="button secondary compact" disabled={busy} onClick={() => void load()} type="button">{busy ? <OrbitLoader size={16} /> : <RefreshCw size={16} />} Refresh</button></header>
+    <header className="shop-stripe-overview-heading"><div><h4>{data?.accountName || "Connected Stripe account"}</h4>{data && <small>{data.accountId} — {data.livemode ? "Live mode" : "Test mode"}</small>}</div><button aria-label="Refresh Stripe account" className="button secondary compact" disabled={busy} onClick={() => void load()} type="button">{busy ? <OrbitLoader size={16} /> : <RefreshCw size={16} />} Refresh</button></header>
     {error && <p className="shop-feedback error" role="alert">{error}</p>}
     {!data && busy && <p className="shop-provider-muted" role="status">Loading Stripe account…</p>}
     {data && <>
@@ -83,7 +83,7 @@ export function ShopCoupons({ request, connected, onConnect, dashboardUrl, curre
         <label>Discount type<select onChange={event => setDiscountType(event.target.value as "percent" | "amount")} value={discountType}><option value="percent">Percentage</option><option value="amount">Fixed amount ({currency.toUpperCase()})</option></select></label>
         <label>{discountType === "percent" ? "Discount (%)" : `Discount (${currency.toUpperCase()})`}<input max={discountType === "percent" ? 100 : 10000} min="0.01" onChange={event => setDiscount(event.target.value)} required step="0.01" type="number" value={discount} /></label>
         <label>Maximum uses<input max="1000000" min="1" onChange={event => setMaxRedemptions(event.target.value)} placeholder="Unlimited" step="1" type="number" value={maxRedemptions} /></label>
-        <label>Expires at<input onChange={event => setExpiresAt(event.target.value)} type="datetime-local" value={expiresAt} /><small>Optional · your local time</small></label>
+        <label>Expires at<input onChange={event => setExpiresAt(event.target.value)} type="datetime-local" value={expiresAt} /><small>Optional — your local time</small></label>
       </div><p className="shop-provider-muted">Leave limits empty for unlimited uses and no expiry. Limits are fixed when created; revoke and create a new code to change them.</p></fieldset></form>
       {loading && <p className="shop-provider-muted" role="status">Loading coupons…</p>}
       {data?.coupons.length ? <div aria-label="Coupon codes" className="shop-catalog-table-scroll" role="region" tabIndex={0}><table className="shop-catalog-table"><thead><tr><th>Code</th><th>Discount</th><th>Uses / limit</th><th>Expires</th><th>Status</th><th>Actions</th></tr></thead><tbody>{data.coupons.map(coupon => {

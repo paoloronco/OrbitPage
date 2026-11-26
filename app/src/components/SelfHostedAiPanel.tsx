@@ -245,7 +245,7 @@ export function SelfHostedAiPanel({ canManageSettings, historyKey = "admin", onA
     setLaunchError("");
     setProposal(null);
     setApplied(false);
-    setMessages((current) => [...current, entry("user", `Launch Kit · ${launchScreenshot.name}`)]);
+    setMessages((current) => [...current, entry("user", `Launch Kit — ${launchScreenshot.name}`)]);
     try {
       const result = await aiPageAgentApi.launchKit(launchScreenshot);
       setMessages((current) => [...current, { ...entry("assistant", result.reply), suggestedPrompts: result.suggestedPrompts }]);
@@ -275,7 +275,6 @@ export function SelfHostedAiPanel({ canManageSettings, historyKey = "admin", onA
         <header className="oss-ai-workspace-header">
           <div className="oss-ai-mark" aria-hidden="true">
             <Sparkles />
-            <span />
           </div>
           <div>
             <h2 id="oss-ai-heading">OrbitPage AI</h2>
@@ -459,7 +458,7 @@ export function SelfHostedAiPanel({ canManageSettings, historyKey = "admin", onA
                   >
                     {modelOptions.map((model) => (
                       <option key={model} value={model}>
-                        {MODEL_LABELS[model]?.name || model} · {MODEL_LABELS[model]?.detail || ""}
+                        {MODEL_LABELS[model]?.name || model} — {MODEL_LABELS[model]?.detail || ""}
                       </option>
                     ))}
                   </select>
@@ -536,7 +535,7 @@ export function SelfHostedAiPanel({ canManageSettings, historyKey = "admin", onA
             <ImagePlus aria-hidden="true" />
             <span>
               <strong>{launchScreenshot ? tr("Screenshot selected", "Screenshot selezionato") : tr("Choose screenshot", "Scegli screenshot")}</strong>
-              <small>{launchScreenshot?.name || "PNG, JPEG, WebP · 4 MB"}</small>
+              <small>{launchScreenshot?.name || "PNG, JPEG, WebP — 4 MB"}</small>
             </span>
             <input
               accept="image/png,image/jpeg,image/webp"

@@ -2098,14 +2098,6 @@ html:has(.orbitpage-admin) {
     gap: 8px;
   }
 
-  .admin-status-dot {
-    width: 8px;
-    height: 8px;
-    border-radius: 999px;
-    background: #10b981;
-    box-shadow: 0 0 0 4px rgb(16 185 129 / 0.12);
-  }
-
   .admin-kicker,
   .admin-version {
     color: var(--admin-secondary-copy);
@@ -4241,7 +4233,6 @@ html:has(.orbitpage-admin) {
 .orbitpage-menu__sections a { flex: 0 0 auto; padding: .55rem .75rem; border-radius: calc(var(--menu-radius) * .65); color: var(--menu-muted); font-size: .78rem; font-weight: 750; text-decoration: none; transition: color 160ms ease, background-color 160ms ease; }
 .orbitpage-menu__sections a:hover { background: var(--menu-surface); color: var(--menu-text); }
 .orbitpage-menu__sections .orbitpage-menu__section-link--nested { display: inline-flex; align-items: center; gap: .35rem; font-size: .72rem; font-weight: 650; }
-.orbitpage-menu__sections .orbitpage-menu__section-link--nested::before { width: .3rem; height: .3rem; border-radius: 50%; content: ""; background: var(--menu-accent); opacity: .72; }
 .orbitpage-menu__tools { display: flex; align-items: center; gap: .85rem; padding: 0 clamp(1.25rem, 4vw, 3rem) .75rem; }
 .orbitpage-menu__search { display: flex; flex: 1 1 22rem; align-items: center; gap: .65rem; min-width: 0; max-width: 34rem; min-height: 2.6rem; padding: 0 .8rem; border: 1px solid var(--menu-border); border-radius: calc(var(--menu-radius) * .75); background: var(--menu-surface); color: var(--menu-muted); }
 .orbitpage-menu__search > svg { flex: 0 0 auto; width: 1rem; height: 1rem; }
@@ -4550,17 +4541,6 @@ html:has(.orbitpage-admin) {
 .oss-ai-mark svg {
   width: 23px;
   height: 23px;
-}
-
-.oss-ai-mark span {
-  position: absolute;
-  right: -2px;
-  bottom: -2px;
-  width: 13px;
-  height: 13px;
-  border: 3px solid #f8fbff;
-  border-radius: 999px;
-  background: #38a56b;
 }
 
 .oss-ai-conversation {
@@ -5780,7 +5760,6 @@ button.subpage-page-card:focus-visible { outline: 3px solid #6d94f3; outline-off
 .orbitpage-construction-brand strong { font-size: 17px; line-height: 1.1; }
 .orbitpage-construction-brand span { color: #6f7e92; font-size: 12px; }
 .orbitpage-construction-status { align-items: center; color: #166b5d; display: flex; font-size: 12px; font-weight: 800; gap: 8px; margin-bottom: 18px; text-transform: uppercase; }
-.orbitpage-construction-status span { background: #2fb895; border: 4px solid #d9f5ec; border-radius: 50%; height: 13px; width: 13px; }
 .orbitpage-construction-panel h1 { font-size: clamp(42px,8vw,78px); font-weight: 800; line-height: 1.02; margin: 0; max-width: 720px; }
 .orbitpage-construction-panel>p { color: #526176; font-size: clamp(17px,2.4vw,21px); line-height: 1.6; margin: 24px 0 34px; max-width: 650px; }
 .orbitpage-construction-actions { align-items: center; display: flex; flex-wrap: wrap; gap: 10px; }
@@ -6627,8 +6606,6 @@ html[dir="rtl"] .admin-dashboard-language select { padding: 0 0 0 15px; }
 .instance-services { display: grid; gap: 9px; font-size: 12px; }
 .instance-services > div { display: flex; flex-wrap: wrap; gap: 7px; }
 .instance-service { display: inline-flex; align-items: center; gap: 6px; padding: 6px 9px; border: 1px solid var(--admin-line); border-radius: 6px; color: var(--admin-ink); }
-.instance-service-dot { width: 7px; height: 7px; border-radius: 50%; background: #b34545; }
-.instance-service.is-ok .instance-service-dot { background: #16805f; }
 .instance-environment-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
 .instance-environment-actions span { color: var(--admin-muted-copy); font-size: 12px; }
 .orbitpage-admin.instance-environment-dialog { max-height: min(85vh, 720px); overflow-y: auto; }
@@ -6711,8 +6688,7 @@ html[dir="rtl"] .admin-dashboard-language select { padding: 0 0 0 15px; }
 .orbitpage-admin .oss-account-layout .mfa-identity-check { display: grid; align-items: start; gap: 18px; }
 .orbitpage-admin .oss-account-layout .mfa-identity-check > .muted { margin: 0; color: var(--admin-muted-copy); font-size: 12px; line-height: 1.5; }
 .orbitpage-admin .oss-account-layout .mfa-status strong { color: var(--admin-ink); font-size: 13px; font-weight: 700; line-height: 1.4; }
-.orbitpage-admin .oss-account-layout .mfa-status span:not(.mfa-status-dot) { color: var(--admin-muted-copy); font-size: 12px; line-height: 1.5; }
-.orbitpage-admin .oss-account-layout .mfa-status-dot { flex: 0 0 auto; }
+.orbitpage-admin .oss-account-layout .mfa-status span { color: var(--admin-muted-copy); font-size: 12px; line-height: 1.5; }
 .orbitpage-admin .oss-account-layout .account-marketing-action { min-height: 38px; height: 38px; padding: 0 14px; border: 1px solid var(--admin-line); border-radius: 6px; font-size: 12px; font-weight: 750; }
 .orbitpage-admin .account-marketing-form { display: grid; gap: 14px; margin-top: 18px; }
 .orbitpage-admin .marketing-preference-check { display: flex; align-items: flex-start; gap: 10px; font-size: 12px; line-height: 1.6; }
@@ -6768,9 +6744,7 @@ html[dir="rtl"] .admin-dashboard-language select { padding: 0 0 0 15px; }
 .orbitpage-admin .oss-account-layout .mfa-status { display: flex; align-items: center; gap: 12px; padding: 14px; border: 1px solid #d8dee8; background: #f8fafc; }
 .orbitpage-admin .oss-account-layout .mfa-status > div { display: grid; gap: 3px; }
 .orbitpage-admin .oss-account-layout .mfa-status span { color: var(--admin-muted-copy); font-size: 12px; }
-.orbitpage-admin .oss-account-layout .mfa-status-dot { color: var(--admin-muted-copy); width: 10px; height: 10px; border-radius: 50%; background: #94a3b8; flex: 0 0 auto; }
 .orbitpage-admin .oss-account-layout .mfa-status.enabled { border-color: #a7d8c3; background: #f1fbf6; }
-.orbitpage-admin .oss-account-layout .mfa-status.enabled .mfa-status-dot { background: #178f5f; box-shadow: 0 0 0 4px rgba(23, 143, 95, .12); }
 .orbitpage-admin .oss-account-layout .mfa-identity-check { align-items: flex-start; }
 .orbitpage-admin .oss-account-layout .mfa-identity-check .field { width: 100%; }
 .orbitpage-admin .oss-account-layout .mfa-actions { display: flex; flex-wrap: wrap; gap: 10px; }

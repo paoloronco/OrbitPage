@@ -602,7 +602,7 @@ useEffect(() => () => {
                   onChange={(event) => update((current) => ({ ...current, locale: event.target.value }))}
                 >
                   {!MENU_LOCALE_OPTIONS.some((option) => option.value === draft.locale) && <option value={draft.locale}>{draft.locale}</option>}
-                  {MENU_LOCALE_OPTIONS.map((option) => <option key={option.value} value={option.value}>{tr(option.label, option.labelIt)} · {option.value}</option>)}
+                  {MENU_LOCALE_OPTIONS.map((option) => <option key={option.value} value={option.value}>{tr(option.label, option.labelIt)} — {option.value}</option>)}
                 </select>
               </div>
             </div>
