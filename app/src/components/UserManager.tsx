@@ -9,7 +9,7 @@ import {
   Loader2,
   Pencil,
 } from 'lucide-react';
-import { Info, Plus, Trash2, UsersRound, X } from '@/components/ui/material-icons';
+import { Info, Trash2, UsersRound, X } from '@/components/ui/material-icons';
 import { useAppI18n } from '@/lib/i18n';
 import { usersApi } from '@/lib/api-client';
 import { isPasswordStrong } from '@/lib/auth';
@@ -253,7 +253,7 @@ export const UserManager = ({ currentUsername }: { currentUsername?: string }) =
           }}
           type="button"
         >
-          {showAddForm ? <X aria-hidden="true" size={16} /> : <Plus aria-hidden="true" size={16} />}
+
           {showAddForm ? tr("Cancel", "Annulla") : tr("Add user", "Aggiungi utente")}
         </button>
       </div>

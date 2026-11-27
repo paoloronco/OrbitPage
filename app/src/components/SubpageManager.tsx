@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { normalizeOrbitPageSubpageSlug } from "@orbitpage/page-schema";
-import { Copy, ExternalLink, FilePlus2, Files, Save, Trash2 } from "lucide-react";
+import { Files } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -192,7 +192,7 @@ export function SubpageManager({
         <div className="subpage-overview-actions">
           <span className="subpage-count">{pages.length + 1}{maxPages ? ` / ${maxPages}` : ""} pages used</span>
           <Button type="button" onClick={addPage} disabled={busy || pageLimitReached || editMode === "view"}>
-            <FilePlus2 className="h-4 w-4" /> Add page
+             Add page
           </Button>
         </div>
       </header>
@@ -249,10 +249,10 @@ export function SubpageManager({
             <div className="subpage-public-url">
               <div><span>Public URL</span><code>{pageUrl}</code>{draft.slug !== selected?.slug && <small>Save the new slug to update this URL.</small>}</div>
               <div className="subpage-url-actions">
-                <Button aria-label="Copy public URL" type="button" variant="outline" size="sm" onClick={copyPageUrl}><Copy className="h-4 w-4" /> Copy</Button>
+                <Button aria-label="Copy public URL" type="button" variant="outline" size="sm" onClick={copyPageUrl}> Copy</Button>
                 {selected?.enabled
-                  ? <Button asChild variant="outline" size="sm"><a href={pageUrl} target="_blank" rel="noreferrer"><ExternalLink className="h-4 w-4" /> Open</a></Button>
-                  : <Button type="button" variant="outline" size="sm" disabled title="Publish this page before opening its public URL"><ExternalLink className="h-4 w-4" /> Open</Button>}
+                  ? <Button asChild variant="outline" size="sm"><a href={pageUrl} target="_blank" rel="noreferrer"> Open</a></Button>
+                  : <Button type="button" variant="outline" size="sm" disabled title="Publish this page before opening its public URL"> Open</Button>}
               </div>
             </div>
             <div className="subpage-details-grid">
@@ -268,8 +268,8 @@ export function SubpageManager({
                 <small>{draft.enabled ? "Anyone with the link can view this page after you save." : "Only you can edit this page until you publish it."}</small>
               </div>
               <div className="subpage-detail-actions">
-                <Button type="button" variant="outline" onClick={removePage} disabled={busy || editMode === "view"}><Trash2 className="h-4 w-4" /> Delete</Button>
-                <Button type="button" onClick={saveDetails} disabled={!detailsDirty || blocksDirty || busy || editMode === "view"}><Save className="h-4 w-4" /> Save settings</Button>
+                <Button type="button" variant="outline" onClick={removePage} disabled={busy || editMode === "view"}> Delete</Button>
+                <Button type="button" onClick={saveDetails} disabled={!detailsDirty || blocksDirty || busy || editMode === "view"}> Save settings</Button>
               </div>
             </div>
             {blocksDirty && <p className="subpage-save-hint" role="status">Save your content cards first. That will also save any pending page settings.</p>}

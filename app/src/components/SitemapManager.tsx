@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { AlertTriangle, Check, CheckCircle2, Copy, ExternalLink, Map, RefreshCw } from "lucide-react";
+import { AlertTriangle, CheckCircle2, Map } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { OrbitLoader } from "@/components/ui/orbit-loader";
@@ -125,13 +125,13 @@ export function SitemapManager({ readOnly = false }: SitemapManagerProps) {
           </div>
           <div className="flex gap-2">
             <Button type="button" variant="outline" className="admin-action" onClick={() => void copyUrl()} disabled={!sitemap?.url || busy}>
-              {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+
               {copied ? tr("Copied", "Copiato") : tr("Copy", "Copia")}
             </Button>
             {sitemap?.generated && (
               <Button asChild variant="outline" className="admin-action">
                 <a href={sitemap.url} target="_blank" rel="noopener noreferrer">
-                  <ExternalLink className="h-4 w-4" />
+
                   {tr("Open", "Apri")}
                 </a>
               </Button>
@@ -152,7 +152,7 @@ export function SitemapManager({ readOnly = false }: SitemapManagerProps) {
         >
           {state === "generating"
             ? <OrbitLoader size={16} state="shaping" />
-            : <RefreshCw className="h-4 w-4" />}
+            : null}
           {state === "generating" ? tr("Generating sitemap", "Generazione sitemap") : sitemap?.generated ? tr("Regenerate sitemap", "Rigenera sitemap") : tr("Generate sitemap", "Genera sitemap")}
         </Button>
       </div>

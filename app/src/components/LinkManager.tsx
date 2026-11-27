@@ -2,7 +2,7 @@ import { type ComponentType, type CSSProperties, type UIEvent, useCallback, useE
 import { createPortal } from "react-dom";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { ArrowDown, ArrowUp, CalendarClock, Check, Code2, Download, FileText, Film, Image, LayoutGrid, Link, List, LockKeyhole, MailPlus, MapPin, Minus, MousePointerClick, Palette, Plus, Search, Share2, Save, ShoppingBag, Tag, Trash2, Type, Upload, UserCircle2, UtensilsCrossed, X } from "lucide-react";
+import { ArrowDown, ArrowUp, CalendarClock, Check, Code2, Download, FileText, Film, Image, LayoutGrid, Link, List, LockKeyhole, MailPlus, MapPin, Minus, MousePointerClick, Palette, Plus, Search, Share2, Tag, Trash2, Type, Upload, UserCircle2, UtensilsCrossed } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -661,7 +661,7 @@ export const LinkManager = ({
   };
 
   const updateLink = (updatedLink: LinkData) => {
-    const updatedLinks = workingLinks.map(link => 
+    const updatedLinks = workingLinks.map(link =>
       String(link.id) === String(updatedLink.id) ? updatedLink : link
     );
     setWorkingLinks(updatedLinks);
@@ -690,7 +690,7 @@ export const LinkManager = ({
       a.click();
       a.remove();
       URL.revokeObjectURL(url);
-      
+
       toast({
         title: "Export Successful",
         description: "Links exported successfully",
@@ -714,14 +714,14 @@ export const LinkManager = ({
       setBusy(true);
       const text = await file.text();
       const data = JSON.parse(text);
-      
+
       if (!Array.isArray(data)) {
         throw new Error('Invalid file format: Expected an array of links');
       }
 
       const { linksApi } = await import('@/lib/api-client');
       await linksApi.import(data);
-      
+
       // Refresh the links after successful import
         const updatedLinks = await linksApi.get();
       setWorkingLinks(updatedLinks.map(link => ({
@@ -730,7 +730,7 @@ export const LinkManager = ({
       })));
       setIsDirty(false);
       setSaveError("");
-      
+
       toast({
         title: "Import Successful",
         description: `Imported ${data.length} links successfully`,
@@ -968,7 +968,7 @@ export const LinkManager = ({
       aria-expanded={isBlockLibraryOpen}
       aria-controls="admin-block-library"
     >
-      <Plus className="h-4 w-4" />
+
       {tr("Add content", "Aggiungi contenuto")}
     </Button>
   ) : null;
@@ -1035,7 +1035,7 @@ export const LinkManager = ({
         <div className="admin-link-actions">
           {isFullEdit && !focusedLink && (
             internalDestinations.some((destination) => destination.kind === 'shop') && <Button onClick={addShopLink} variant="outline" className="admin-action" disabled={atBlockLimit || hasShopLink || busy}>
-              <ShoppingBag className="h-4 w-4" />
+
               {hasShopLink ? tr("Shop added", "Shop aggiunto") : tr("Add Shop", "Aggiungi Shop")}
             </Button>
           )}
@@ -1217,7 +1217,7 @@ export const LinkManager = ({
             aria-expanded={isBlockLibraryOpen}
             aria-controls="admin-block-library"
           >
-            <Plus className="h-5 w-5" />
+
             {tr("Add content", "Aggiungi contenuto")}
           </Button>
 
@@ -1240,7 +1240,7 @@ export const LinkManager = ({
                         <span className="admin-content-quick-add__icon" data-service-brand-tile={item.brand || undefined}>
                           {item.brand
                             ? <ServiceBrandIcon provider={item.brand} className="h-5 w-5" />
-                            : ItemIcon && <ItemIcon className="h-5 w-5" />}
+                            : ItemIcon && null}
                         </span>
                         <span>{item.title}</span>
                         {item.badge && <small>{item.badge}</small>}
@@ -1267,23 +1267,23 @@ export const LinkManager = ({
               {isFullEdit && (
                 <div className="flex flex-wrap justify-center gap-2">
                   <Button onClick={addNewLink} className="admin-action admin-action-primary" disabled={atBlockLimit || busy}>
-                    <Link className="h-4 w-4" />
+
                     {tr("Add link", "Aggiungi link")}
                   </Button>
                   <Button onClick={addNativeMenu} variant="outline" className="admin-action" disabled={atBlockLimit || busy}>
-                    {nativeMenuEnabled ? <UtensilsCrossed className="h-4 w-4" /> : <LockKeyhole className="h-4 w-4" />}
+
                     {tr("Add menu", "Aggiungi menu")}
                   </Button>
                   {internalDestinations.some((destination) => destination.kind === 'shop') && <Button onClick={addShopLink} variant="outline" className="admin-action" disabled={atBlockLimit || hasShopLink || busy}>
-                    <ShoppingBag className="h-4 w-4" />
+
                     {hasShopLink ? tr("Shop added", "Shop aggiunto") : tr("Add Shop", "Aggiungi Shop")}
                   </Button>}
                   <Button onClick={addNewBulletedList} variant="outline" className="admin-action" disabled={atBlockLimit || busy}>
-                    <List className="h-4 w-4" />
+
                     {tr("Add list", "Aggiungi elenco")}
                   </Button>
                   <Button onClick={addNewHeading} variant="outline" className="admin-action" disabled={atBlockLimit || busy}>
-                    <Type className="h-4 w-4" />
+
                     {tr("Add heading", "Aggiungi titolo")}
                   </Button>
                 </div>
@@ -1355,10 +1355,10 @@ export const LinkManager = ({
           {(editingLinkId || hasUnsavedChanges) && (
             <div className="admin-profile-save-float">
               <Button type="button" variant="outline" size="sm" onClick={revertUnsavedChanges} disabled={busy}>
-                <X className="h-4 w-4" /> {tr("Revert", "Ripristina")}
+                 {tr("Revert", "Ripristina")}
               </Button>
               <Button type="button" size="sm" onClick={handleSave} disabled={!hasUnsavedChanges || preparingLinks.size > 0 || busy} data-onboarding="links-save">
-                {busy ? <OrbitLoader size={16} state="composing" /> : <Save className="h-4 w-4" />}
+                {busy ? <OrbitLoader size={16} state="composing" /> : null}
                 {busy ? tr("Saving", "Salvataggio") : tr("Save", "Salva")}
               </Button>
             </div>

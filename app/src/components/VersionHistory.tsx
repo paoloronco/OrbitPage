@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { CheckCircle2, Clock3, History, Info, RotateCcw } from '@/components/ui/material-icons';
+import { CheckCircle2, Clock3, History, Info } from '@/components/ui/material-icons';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { OrbitLoader, OrbitLoadingState } from '@/components/ui/orbit-loader';
@@ -80,8 +80,8 @@ export function VersionHistory({ canRestore = true }: { canRestore?: boolean }) 
           <span className="block truncate text-xs text-muted-foreground">{new Date(version.lastModified).toLocaleString(locale)}</span>
         </span>
         <Button type="button" variant="outline" size="sm" className="admin-action" disabled={!canRestore || version.current || restoring !== null} onClick={() => void restore(version.revision)}>
-          {restoring === version.revision ? <OrbitLoader size={16} state="weaving" /> : <RotateCcw className="h-4 w-4" />}
-          <span className="hidden sm:inline">{restoring === version.revision ? tr('Restoring', 'Ripristino') : tr('Restore', 'Ripristina')}</span>
+          {restoring === version.revision ? <OrbitLoader size={16} state="weaving" /> : null}
+          <span>{restoring === version.revision ? tr('Restoring', 'Ripristino') : tr('Restore', 'Ripristina')}</span>
         </Button>
       </div>)}
     </div> : <div className="rounded-md border border-dashed border-border px-4 py-8 text-center text-sm text-muted-foreground">{tr('Save your page to create the first restorable version.', 'Salva la pagina per creare la prima versione ripristinabile.')}</div>}

@@ -3,15 +3,20 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { parseOrbitPageMenu } from '@orbitpage/page-schema';
 import {
-  ArrowDown, ArrowUp, Check,
-  ImagePlus, ListTree, Palette, Plus, RotateCcw, Save, Trash2,
-  UtensilsCrossed, X,
+  ArrowDown,
+  ArrowUp,
+  Check,
+  ImagePlus,
+  Palette,
+  Trash2,
+  UtensilsCrossed,
+  X,
 } from '@/components/ui/material-icons';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { MenuView } from './MenuView';
 import { PreviewDeviceFrame } from './LivePreview';
-import { Download, UploadCloud } from 'lucide-react';
+
 import { PreviewDeviceToggle, type PreviewDevice } from './PreviewDeviceToggle';
 import { ColorPicker } from '@/components/ui/color-picker';
 import { OrbitLoader } from '@/components/ui/orbit-loader';
@@ -462,7 +467,7 @@ useEffect(() => () => {
                 disabled={draft.sections.length >= 30}
                 onClick={() => addSubsection(section.parentId || section.id)}
               >
-                <Plus className="h-4 w-4" />{nested ? tr("Another subcategory", "Altra sottocategoria") : tr("Subcategory", "Sottocategoria")}
+                {nested ? tr("Another subcategory", "Altra sottocategoria") : tr("Subcategory", "Sottocategoria")}
               </Button>
             </div>
       </section>
@@ -624,7 +629,7 @@ useEffect(() => () => {
     );
   }
 
-  const publicationButton = <button className="button primary" disabled={isDirty || saving || Boolean(uploadingItem)} title={isDirty ? tr('Save or revert your changes first.', 'Salva o annulla prima le modifiche.') : undefined} type="button" onClick={() => void save({ ...draft, enabled: !draft.enabled })}>{saving ? <OrbitLoader size={16} /> : draft.enabled ? <Download size={16} /> : <UploadCloud size={16} />}{draft.enabled ? tr('Unpublish', 'Rimuovi pubblicazione') : tr('Publish menu', 'Pubblica menu')}</button>;
+  const publicationButton = <button className="button primary" disabled={isDirty || saving || Boolean(uploadingItem)} title={isDirty ? tr('Save or revert your changes first.', 'Salva o annulla prima le modifiche.') : undefined} type="button" onClick={() => void save({ ...draft, enabled: !draft.enabled })}>{saving ? <OrbitLoader size={16} /> : draft.enabled ? null : null}{draft.enabled ? tr('Unpublish', 'Rimuovi pubblicazione') : tr('Publish menu', 'Pubblica menu')}</button>;
   const previewControls = <div className="shop-preview-toolbar"><PreviewDeviceToggle value={device} onChange={setDevice} /><div className="shop-preview-publication">{publicationButton}</div></div>;
   const setupLabels = [tr('Your venue', 'Il tuo locale'), tr('Categories', 'Categorie'), tr('Menu items', 'Piatti ed elementi')];
   const setupReady = draft.name.trim() && draft.sections.every(section => section.name.trim());
@@ -665,20 +670,20 @@ useEffect(() => () => {
                 <Button variant="outline" size="icon" aria-label={`${tr('Move down', 'Sposta giù')} ${index + 1}`} disabled={index === draft.sections.length - 1} onClick={() => update(current => ({ ...current, sections: moveMenuSection(current.sections, section.id, 1) }))}><ArrowDown /></Button>
                 <Button variant="outline" size="icon" aria-label={`${tr('Remove category', 'Rimuovi categoria')} ${index + 1}`} disabled={draft.sections.length <= 1 || draft.items.some(item => item.sectionId === section.id)} onClick={() => update(current => ({ ...current, sections: current.sections.filter(candidate => candidate.id !== section.id) }))}><Trash2 /></Button>
               </div>)}</div>
-              <Button variant="outline" disabled={draft.sections.length >= 30} onClick={() => update(current => ({ ...current, sections: [...current.sections, { id: makeId('section'), name: '', visible: true, position: current.sections.length }] }))}><Plus />{tr('Add category', 'Aggiungi categoria')}</Button>
+              <Button variant="outline" disabled={draft.sections.length >= 30} onClick={() => update(current => ({ ...current, sections: [...current.sections, { id: makeId('section'), name: '', visible: true, position: current.sections.length }] }))}>{tr('Add category', 'Aggiungi categoria')}</Button>
             </>}
             {onboardingStep === 2 && <>
               <p>{tr('Add dishes or drinks inside each category. You can keep editing after setup.', 'Aggiungi piatti o bevande nelle categorie. Potrai continuare a modificarli dopo la configurazione.')}</p>
-              {draft.sections.map(section => <section key={section.id} className="menu-onboarding-items"><h4>{section.name}</h4><ul>{draft.items.filter(item => item.sectionId === section.id).map(item => <li key={item.id}><Button variant="outline" onClick={() => { setSelectedItemId(item.id); openDialog('item'); }}>{item.name}</Button><span>{formatMenuPriceInput(item.priceMinor, draft.locale)} {draft.currency}</span></li>)}</ul><Button variant="outline" disabled={maxItems !== null && draft.items.length >= maxItems} onClick={() => addItem(section.id)}><Plus />{tr('Add item to', 'Aggiungi elemento a')} {section.name}</Button></section>)}
+              {draft.sections.map(section => <section key={section.id} className="menu-onboarding-items"><h4>{section.name}</h4><ul>{draft.items.filter(item => item.sectionId === section.id).map(item => <li key={item.id}><Button variant="outline" onClick={() => { setSelectedItemId(item.id); openDialog('item'); }}>{item.name}</Button><span>{formatMenuPriceInput(item.priceMinor, draft.locale)} {draft.currency}</span></li>)}</ul><Button variant="outline" disabled={maxItems !== null && draft.items.length >= maxItems} onClick={() => addItem(section.id)}>{tr('Add item to', 'Aggiungi elemento a')} {section.name}</Button></section>)}
             </>}
             </fieldset>
             <footer>{onboardingStep > 0 && <Button variant="outline" disabled={saving || Boolean(uploadingItem)} onClick={() => setOnboardingStep(step => (step ?? 1) - 1)}>{tr('Back', 'Indietro')}</Button>}{onboardingStep < 2 ? <Button disabled={!setupReady || saving || Boolean(uploadingItem)} onClick={nextSetupStep}>{tr('Continue', 'Continua')}</Button> : <Button disabled={!setupReady || saving || Boolean(uploadingItem)} onClick={async () => { if (await save({ ...draft, setupCompleted: true, updatedAt: new Date().toISOString() })) setOnboardingStep(null); }}>{saving ? tr('Saving', 'Salvataggio') : tr('Finish setup', 'Completa configurazione')}</Button>}</footer>
           </section> : <>
           {deviceSlot && createPortal(previewControls, deviceSlot)}
           <fieldset disabled={saving || Boolean(uploadingItem)} className={`menu-preview-toolbar shop-view-toolbar${deviceSlot ? " has-preview-slot" : ""}`}>
-            <div className="shop-toolbar-left"><button className="shop-tool-button shop-personalize-button" aria-label={tr('Personalize', 'Personalizza')} title={tr('Personalize', 'Personalizza')} type="button" onClick={() => setActivePanel(activePanel === 'appearance' ? 'content' : 'appearance')} aria-expanded={activePanel === 'appearance'}><Palette size={18} /><span>{tr('Personalize', 'Personalizza')}</span></button></div>
+            <div className="shop-toolbar-left"><button className="shop-tool-button shop-personalize-button" aria-label={tr('Personalize', 'Personalizza')} title={tr('Personalize', 'Personalizza')} type="button" onClick={() => setActivePanel(activePanel === 'appearance' ? 'content' : 'appearance')} aria-expanded={activePanel === 'appearance'}><span>{tr('Personalize', 'Personalizza')}</span></button></div>
             <div className="shop-toolbar-publication">{publicationButton}</div>
-            <div className="shop-toolbar-right"><button className="button secondary compact shop-catalog-button" aria-label={tr('Add section', 'Aggiungi sezione')} disabled={draft.sections.length >= 30} type="button" onClick={addSection}><ListTree size={14} /><span>{tr('Add section', 'Aggiungi sezione')}</span></button><button className="button primary compact shop-add-product-button" aria-label={tr('Add item', 'Aggiungi elemento')} disabled={maxItems !== null && draft.items.length >= maxItems} type="button" onClick={() => addItem()}><Plus size={16} /><span>{tr('Add item', 'Aggiungi elemento')}</span></button>{!deviceSlot && <PreviewDeviceToggle value={device} onChange={setDevice} />}</div>
+            <div className="shop-toolbar-right"><button className="button secondary compact shop-catalog-button" aria-label={tr('Add section', 'Aggiungi sezione')} disabled={draft.sections.length >= 30} type="button" onClick={addSection}><span>{tr('Add section', 'Aggiungi sezione')}</span></button><button className="button primary compact shop-add-product-button" aria-label={tr('Add item', 'Aggiungi elemento')} disabled={maxItems !== null && draft.items.length >= maxItems} type="button" onClick={() => addItem()}><span>{tr('Add item', 'Aggiungi elemento')}</span></button>{!deviceSlot && <PreviewDeviceToggle value={device} onChange={setDevice} />}</div>
           </fieldset>
           <div className={`menu-preview-workspace${activePanel === 'appearance' ? ' has-personalize' : ''}`}>
             <section className="menu-preview-canvas shop-storefront-canvas visual-site-editor__canvas" aria-label={tr('Menu preview', 'Anteprima menu')}>
@@ -709,10 +714,10 @@ useEffect(() => () => {
           {(isDirty || saving) && !dialog && (
             <div className="admin-profile-save-float">
               <Button type="button" variant="outline" size="sm" onClick={revertUnsavedChanges} disabled={saving}>
-                <RotateCcw className="h-4 w-4" /> {tr('Reset', 'Ripristina')}
+                 {tr('Reset', 'Ripristina')}
               </Button>
               <Button type="button" size="sm" onClick={() => void save()} disabled={!isDirty || saving}>
-                {saving ? <OrbitLoader size={16} state="composing" /> : <Save className="h-4 w-4" />}
+                {saving ? <OrbitLoader size={16} state="composing" /> : null}
                 {saving ? tr('Saving', 'Salvataggio') : tr('Save', 'Salva')}
               </Button>
             </div>

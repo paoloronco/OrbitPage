@@ -11,7 +11,6 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { OrbitLoader } from "@/components/ui/orbit-loader";
 import {
   AlertTriangle,
-  Check,
   CheckCircle,
   ChevronLeft,
   ChevronRight,
@@ -20,7 +19,6 @@ import {
   Layers3,
   LockKeyhole,
   Palette,
-  Save,
 } from "@/components/ui/material-icons";
 import {
   type ThemeConfig,
@@ -149,7 +147,7 @@ const PresetCard = ({ preset, active, onApply }: { preset: ThemePreset; active: 
       </div>
       <p className="min-h-10 text-sm leading-5 text-slate-600">{preset.description}</p>
       <Button type="button" variant={active ? "default" : "outline"} className="w-full" onClick={onApply}>
-        {active ? <Check className="mr-2 h-4 w-4" /> : <Eye className="mr-2 h-4 w-4" />}
+
         {active ? tr("Selected", "Selezionato") : tr("Use this theme", "Usa questo tema")}
       </Button>
     </div>
@@ -179,7 +177,7 @@ const CardPresetCard = ({ preset, active, onApply }: { preset: CardThemePreset; 
       </div>
       <p className="min-h-10 text-sm leading-5 text-slate-600">{preset.description}</p>
       <Button type="button" variant={active ? "default" : "outline"} className="w-full" onClick={onApply}>
-        {active ? <Check className="mr-2 h-4 w-4" /> : <Layers3 className="mr-2 h-4 w-4" />}
+
         {active ? tr("Selected", "Selezionato") : tr("Use card style", "Usa stile card")}
       </Button>
     </div>
@@ -474,7 +472,7 @@ export const ThemeCustomizer = ({
     {typeof document !== "undefined" && !fineDialogOpen && (hasDraft || saveState === "saving") ? createPortal(
         <div className="admin-profile-save-layer"><div className="admin-profile-save-float">
           <Button variant="outline" size="sm" disabled={saveState === "saving"} onClick={revert}>{tr("Revert", "Ripristina")}</Button>
-          <Button aria-busy={saveState === "saving"} size="sm" disabled={saveState === "saving"} onClick={() => void saveTheme()}>{saveState === "saving" ? <OrbitLoader size={16} /> : <Save className="h-4 w-4" />}{saveState === "saving" ? tr("Saving", "Salvataggio") : tr("Save", "Salva")}</Button>
+          <Button aria-busy={saveState === "saving"} size="sm" disabled={saveState === "saving"} onClick={() => void saveTheme()}>{saveState === "saving" ? <OrbitLoader size={16} /> : null}{saveState === "saving" ? tr("Saving", "Salvataggio") : tr("Save", "Salva")}</Button>
         </div></div>, document.body
       ) : null}
       </div>

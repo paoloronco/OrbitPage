@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState, type FormEvent } from "react";
-import { ArrowUpRight, Plus, RefreshCw } from "lucide-react";
+
 import type { ShopRequest } from "./shop-client";
 import type { ShopCoupon, ShopStripeOverview } from "../../packages/shop/stripe.js";
 import { OrbitLoader } from "./ui/orbit-loader";
@@ -19,12 +19,12 @@ export function ShopStripeAccount({ request, dashboardUrl }: { request: ShopRequ
   }, [request]);
   useEffect(() => { const controller = new AbortController(); void load(controller.signal); return () => controller.abort(); }, [load]);
   return <section aria-label="Stripe account overview" className="shop-stripe-overview">
-    <header className="shop-stripe-overview-heading"><div><h4>{data?.accountName || "Connected Stripe account"}</h4>{data && <small>{data.accountId} — {data.livemode ? "Live mode" : "Test mode"}</small>}</div><button aria-label="Refresh Stripe account" className="button secondary compact" disabled={busy} onClick={() => void load()} type="button">{busy ? <OrbitLoader size={16} /> : <RefreshCw size={16} />} Refresh</button></header>
+    <header className="shop-stripe-overview-heading"><div><h4>{data?.accountName || "Connected Stripe account"}</h4>{data && <small>{data.accountId} — {data.livemode ? "Live mode" : "Test mode"}</small>}</div><button aria-label="Refresh Stripe account" className="button secondary compact" disabled={busy} onClick={() => void load()} type="button">{busy ? <OrbitLoader size={16} /> : null} Refresh</button></header>
     {error && <p className="shop-feedback error" role="alert">{error}</p>}
     {!data && busy && <p className="shop-provider-muted" role="status">Loading Stripe account…</p>}
     {data && <>
       <div className="shop-stripe-balances">{(["available", "pending"] as const).map(kind => <div key={kind}><span>{kind === "available" ? "Available balance" : "Pending balance"}</span>{data[kind].length ? data[kind].map(item => <strong key={item.currency}>{money(item.amount, item.currency)}</strong>) : <strong>{money(0)}</strong>}</div>)}</div>
-      <div className="shop-section-heading"><h4>Recent Stripe activity</h4><a href={dashboardUrl} rel="noreferrer" target="_blank">View all in Stripe <ArrowUpRight size={14} /></a></div>
+      <div className="shop-section-heading"><h4>Recent Stripe activity</h4><a href={dashboardUrl} rel="noreferrer" target="_blank">View all in Stripe </a></div>
       <p className="shop-provider-muted">Up to 50 recent account transactions, including activity outside OrbitPage. Amounts and fees come directly from Stripe.</p>
       {data.transactions.length ? <div aria-label="Stripe transactions" className="shop-catalog-table-scroll" role="region" tabIndex={0}><table className="shop-catalog-table"><thead><tr><th>Date</th><th>Type</th><th>Amount</th><th>Fees</th><th>Net</th></tr></thead><tbody>{data.transactions.map(item => <tr key={item.id}><td>{new Date(item.createdAt).toLocaleDateString("en-US")}</td><td>{item.type.replaceAll("_", " ")}</td><td>{money(item.amount, item.currency)}</td><td>{money(item.fee, item.currency)}</td><td>{money(item.net, item.currency)}</td></tr>)}</tbody></table></div> : <p className="shop-provider-muted">No Stripe transactions yet.</p>}
     </>}
@@ -76,7 +76,7 @@ export function ShopCoupons({ request, connected, onConnect, dashboardUrl, curre
     } finally { setBusy(false); }
   }
   return <section aria-labelledby="shop-coupons-title" className="shop-provider-panel shop-coupons">
-    <header className="shop-provider-heading"><h3 id="shop-coupons-title">Coupons</h3>{connected && <button className="button primary" disabled={busy || loading} form="shop-coupon-form" type="submit">{busy ? <OrbitLoader size={16} /> : <Plus size={16} />} Create coupon</button>}<p>Create discount codes for customers to enter at Stripe Checkout.</p></header>
+    <header className="shop-provider-heading"><h3 id="shop-coupons-title">Coupons</h3>{connected && <button className="button primary" disabled={busy || loading} form="shop-coupon-form" type="submit">{busy ? <OrbitLoader size={16} /> : null} Create coupon</button>}<p>Create discount codes for customers to enter at Stripe Checkout.</p></header>
     {!connected ? <><p className="shop-provider-muted">Connect Stripe before creating coupons.</p><button className="button primary" onClick={onConnect} type="button">Open Stripe settings</button></> : <>
       <form id="shop-coupon-form" className="shop-provider-form shop-coupon-form" onSubmit={event => void create(event)}><fieldset disabled={busy || loading}><div className="shop-option-grid">
         <label>Coupon code<input autoCapitalize="characters" autoComplete="off" maxLength={40} minLength={2} onChange={event => setCode(event.target.value)} pattern="[A-Za-z0-9-]+" placeholder="WELCOME10" required value={code} /></label>

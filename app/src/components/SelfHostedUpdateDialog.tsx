@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Download, ExternalLink, RefreshCw } from '@/components/ui/material-icons';
+
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
@@ -136,13 +136,13 @@ export function SelfHostedUpdateDialog({ requestedVersion, canInstall, onClose }
       </div>}
       {!active && status && !status.enabled && <>
         <p>{tr('Update with Docker Run or Compose using the guide below. Dashboard installation requires the host service, included in Linux and Proxmox installations or enabled once for an existing Docker container.', 'Aggiorna con Docker Run o Compose seguendo la guida. L’installazione dalla dashboard richiede il servizio host, incluso nelle installazioni Linux e Proxmox o attivato una volta per un container Docker esistente.')}</p>
-        <a className="account-instance-release-link" href={UPDATE_GUIDE} target="_blank" rel="noopener noreferrer"><ExternalLink className="h-4 w-4" />{tr('Update guide', 'Guida agli aggiornamenti')}</a>
+        <a className="account-instance-release-link" href={UPDATE_GUIDE} target="_blank" rel="noopener noreferrer">{tr('Update guide', 'Guida agli aggiornamenti')}</a>
       </>}
       <DialogFooter className="account-delete-actions">
         {!active && <Button className="account-secondary-action" type="button" variant="outline" onClick={() => { setShowResult(false); setPassword(''); onClose(); }}>{tr('Close', 'Chiudi')}</Button>}
-        {connectionError && <Button className="account-secondary-action" type="button" variant="outline" disabled={checking} onClick={async () => { setChecking(true); try { await readStatus(); } finally { setChecking(false); } }}><RefreshCw className="h-4 w-4" />{checking ? tr('Checking…', 'Verifica…') : tr('Check status', 'Verifica stato')}</Button>}
-        {!active && job?.state === 'completed' && !reloading && <Button className="account-primary-action" type="button" onClick={() => window.location.reload()}><RefreshCw className="h-4 w-4" />{tr('Reload dashboard', 'Ricarica dashboard')}</Button>}
-        {!active && job?.state !== 'completed' && status?.enabled && requestedVersion && canInstall && <Button className="account-primary-action" type="button" disabled={!password || connectionError} onClick={() => void install()}><Download className="h-4 w-4" />{tr('Install update', 'Installa aggiornamento')}</Button>}
+        {connectionError && <Button className="account-secondary-action" type="button" variant="outline" disabled={checking} onClick={async () => { setChecking(true); try { await readStatus(); } finally { setChecking(false); } }}>{checking ? tr('Checking…', 'Verifica…') : tr('Check status', 'Verifica stato')}</Button>}
+        {!active && job?.state === 'completed' && !reloading && <Button className="account-primary-action" type="button" onClick={() => window.location.reload()}>{tr('Reload dashboard', 'Ricarica dashboard')}</Button>}
+        {!active && job?.state !== 'completed' && status?.enabled && requestedVersion && canInstall && <Button className="account-primary-action" type="button" disabled={!password || connectionError} onClick={() => void install()}>{tr('Install update', 'Installa aggiornamento')}</Button>}
       </DialogFooter>
     </DialogContent>
   </Dialog>;

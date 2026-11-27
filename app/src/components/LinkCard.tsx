@@ -8,7 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { AlignCenter, AlignLeft, AlignRight, ArrowLeft, ArrowRight, CalendarClock, ChevronDown, Code2, Image, Loader2, LockKeyhole, MapPin, Plus, RotateCcw, Share2, ShieldCheck, ShoppingBag, Tag, UserCircle2, X, Edit, Eye, EyeOff, ExternalLink, Upload, Trash2, GripVertical, MousePointerClick, UtensilsCrossed } from "lucide-react";
+import { AlignCenter, AlignLeft, AlignRight, ArrowLeft, ArrowRight, CalendarClock, ChevronDown, Code2, Image, Loader2, LockKeyhole, MapPin, Plus, Share2, ShieldCheck, ShoppingBag, Tag, UserCircle2, X, Edit, Eye, EyeOff, ExternalLink, Upload, Trash2, GripVertical, MousePointerClick, UtensilsCrossed } from "lucide-react";
 import { PublicBlockRenderer } from "./PublicBlockRenderer";
 import { getPublicBlockAlignment } from "@/lib/public-block-style";
 import { LinkEditMode } from "@/lib/permissions";
@@ -1335,7 +1335,7 @@ export const LinkCard = ({
                           <small>{tr("Choose a social app or add any custom URL.", "Scegli un social oppure aggiungi qualsiasi URL.")}</small>
                         </span>
                         <Button type="button" variant="outline" size="sm" onClick={() => addSocialItem()} disabled={socialData.items.length >= 16}>
-                          <Plus className="mr-1 h-3.5 w-3.5" />{tr("Custom URL", "URL personalizzato")}
+                          {tr("Custom URL", "URL personalizzato")}
                         </Button>
                       </div>
                       <div className="admin-compact-link-presets" aria-label={tr("Social presets", "Preset social")}>
@@ -1363,7 +1363,7 @@ export const LinkCard = ({
                         <div>
                           {availablePages.map((page) => (
                             <Button key={page.url} type="button" variant="outline" size="sm" disabled={socialData.items.length >= 16} onClick={() => addSocialItem({ label: page.title, url: page.url, platform: 'page', icon: '' })}>
-                              <Plus className="mr-1 h-3 w-3" />{page.title}
+                              {page.title}
                             </Button>
                           ))}
                         </div>
@@ -2100,14 +2100,14 @@ export const LinkCard = ({
                 onClick={() => setEditLink(prev => ({ ...prev, backgroundColor: undefined, textColor: undefined }))}
                 title="Use theme colors"
               >
-                <RotateCcw className="h-3.5 w-3.5" />
+
                 Use theme colors
               </Button>
             )}
               </div>
             </section>
             )}
-            
+
           </div>
         ) : (
             <div className="flex items-start justify-between">

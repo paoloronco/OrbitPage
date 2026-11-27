@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { AlertTriangle, CheckCircle2, ExternalLink, FilePlus2, FileText, Plus, RotateCcw, Save, Trash2, X } from "lucide-react";
+import { AlertTriangle, CheckCircle2, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -178,7 +178,7 @@ export function TextFileManager({ readOnly: requestedReadOnly = false }: TextFil
             }}
             disabled={busy}
           >
-            {creating ? <X className="h-4 w-4" /> : <FilePlus2 className="h-4 w-4" />}
+
             {creating ? tr("Cancel", "Annulla") : tr("Add TXT file", "Aggiungi file TXT")}
           </Button>
         )}
@@ -211,7 +211,7 @@ export function TextFileManager({ readOnly: requestedReadOnly = false }: TextFil
               onClick={() => void createFile()}
               disabled={busy || !newPath.trim()}
             >
-              {state === "saving" ? <OrbitLoader size={16} state="composing" /> : <Plus className="h-4 w-4" />}
+              {state === "saving" ? <OrbitLoader size={16} state="composing" /> : null}
               {tr("Create file", "Crea file")}
             </Button>
           </div>
@@ -272,7 +272,7 @@ export function TextFileManager({ readOnly: requestedReadOnly = false }: TextFil
                 className="inline-flex items-center gap-2 text-sm font-semibold text-blue-700 hover:text-blue-900"
               >
                 {tr("Open", "Apri")}
-                <ExternalLink className="h-4 w-4" />
+
               </a>
             )}
           </div>
@@ -295,11 +295,11 @@ export function TextFileManager({ readOnly: requestedReadOnly = false }: TextFil
               {activeFile?.isCustom && confirmDelete ? (
                 <div className="flex gap-2">
                   <Button type="button" variant="outline" className="admin-action" onClick={() => setConfirmDelete(false)} disabled={busy}>
-                    <X className="h-4 w-4" />
+
                     {tr("Cancel", "Annulla")}
                   </Button>
                   <Button type="button" variant="destructive" className="admin-action" onClick={() => void resetToDefault()} disabled={busy || readOnly}>
-                    <Trash2 className="h-4 w-4" />
+
                     {tr("Confirm delete", "Conferma eliminazione")}
                   </Button>
                 </div>
@@ -312,7 +312,7 @@ export function TextFileManager({ readOnly: requestedReadOnly = false }: TextFil
                   onClick={() => activeFile?.isCustom ? setConfirmDelete(true) : void resetToDefault()}
                   disabled={busy || readOnly || (!activeFile?.isCustom && !activeFile?.isCustomized)}
                 >
-                  {activeFile?.isCustom ? <Trash2 className="h-4 w-4" /> : <RotateCcw className="h-4 w-4" />}
+
                   {activeFile?.isCustom ? tr("Delete file", "Elimina file") : tr("Reset", "Ripristina")}
                 </Button>
               )}
@@ -322,7 +322,7 @@ export function TextFileManager({ readOnly: requestedReadOnly = false }: TextFil
                 onClick={save}
                 disabled={busy || readOnly || !dirty}
               >
-                {state === "saving" ? <OrbitLoader size={16} state="composing" /> : <Save className="h-4 w-4" />}
+                {state === "saving" ? <OrbitLoader size={16} state="composing" /> : null}
                 {state === "saving" ? tr("Saving file", "Salvataggio file") : tr("Save", "Salva")}
               </Button>
             </div>

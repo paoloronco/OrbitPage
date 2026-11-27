@@ -1,4 +1,4 @@
-import { ArrowUpRight, Github, Settings2 } from "lucide-react";
+import { Github, Settings2 } from "lucide-react";
 import { OrbitPageBrand } from "./OrbitPageBrand";
 import { withBasePath } from "@/lib/base-path";
 
@@ -31,11 +31,11 @@ export function UnderConstruction() {
           <a href="https://github.com/paoloronco/OrbitPage" rel="noopener noreferrer" target="_blank">
             <Github aria-hidden="true" size={18} />
             Open-source repository
-            <ArrowUpRight aria-hidden="true" size={15} />
+
           </a>
           <a href="https://orbitpage.com" rel="noopener noreferrer" target="_blank">
             OrbitPage managed hosting
-            <ArrowUpRight aria-hidden="true" size={15} />
+
           </a>
         </div>
       </section>

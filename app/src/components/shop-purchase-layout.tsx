@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowLeft, Download, FileText, Mail } from "lucide-react";
+import { FileText, Mail } from "lucide-react";
 import type { CSSProperties, ReactNode } from "react";
 import type { ShopPurchasePresentation } from "../../packages/shop/render.js";
 
@@ -26,7 +26,7 @@ export function ShopPurchaseLayout({ shop, className, children, basePath = "" }:
             : <img alt="" src={`${basePath}/brand/orbitpage-mark.svg`} width={44} height={44} />}
           <strong>{shop?.name || "OrbitPage"}</strong>
         </div>
-        {shop?.url && <a className="shop-purchase-back" href={shop.url}><ArrowLeft size={16} aria-hidden="true" /> Back to shop</a>}
+        {shop?.url && <a className="shop-purchase-back" href={shop.url}> Back to shop</a>}
       </header>
       {children}
       <footer className="shop-purchase-footer">
@@ -47,7 +47,7 @@ export function ShopPurchaseFiles({ files, remaining, expiresAt }: {
     {files.map((file, index) => <div className="shop-purchase-file" key={`${file.filename}-${index}`}>
       <span className="shop-purchase-file-icon" aria-hidden="true"><FileText size={22} /></span>
       <div><strong>{file.filename}</strong><small>{file.sizeBytes > 0 ? file.sizeBytes < 1024 * 1024 ? `${Math.ceil(file.sizeBytes / 1024)} KB` : `${(file.sizeBytes / (1024 * 1024)).toFixed(1)} MB` : "Digital file"}</small></div>
-      {available && <a className="shop-purchase-button primary" href={file.url} download={file.filename} aria-label={`Download ${file.filename}`}><Download size={17} aria-hidden="true" /> Download</a>}
+      {available && <a className="shop-purchase-button primary" href={file.url} download={file.filename} aria-label={`Download ${file.filename}`}> Download</a>}
     </div>)}
     <p className="shop-purchase-note">{available ? <>{remaining} downloads remaining{expiresAt && <> — Available until {new Date(expiresAt).toLocaleDateString("en-US", { dateStyle: "medium" })}</>}</>
       : <>{expired ? "Your download link has expired." : "Download limit reached."} Contact the seller if you need another copy.</>}</p>

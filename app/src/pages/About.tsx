@@ -1,10 +1,8 @@
 import { useEffect, useState } from "react";
 import {
-  ArrowRight,
   BarChart3,
   CheckCircle2,
   Database,
-  ExternalLink,
   Github,
   LockKeyhole,
   Palette,
@@ -141,7 +139,7 @@ const About = () => {
               href={withBasePath("/dashboard/profile")}
             >
               Try the admin demo
-              <ArrowRight className="h-4 w-4" />
+
             </a>
             <a
               className="inline-flex items-center justify-center gap-2 rounded-md border border-slate-300 bg-white px-5 py-3 text-sm font-semibold text-slate-950 transition hover:border-slate-400 hover:bg-slate-50"
@@ -150,7 +148,7 @@ const About = () => {
               rel="noreferrer"
             >
               View the source
-              <ExternalLink className="h-4 w-4" />
+
             </a>
           </div>
         </div>
@@ -302,7 +300,7 @@ const About = () => {
             className="mt-5 inline-flex items-center gap-2 text-sm font-semibold text-blue-700 hover:text-blue-900"
           >
             Docker Hub
-            <ExternalLink className="h-4 w-4" />
+
           </a>
         </div>
       </section>

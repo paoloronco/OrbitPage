@@ -1,7 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
 import {
-  ArrowLeft,
-  ArrowRight,
   Check,
   CheckCircle2,
   Database,
@@ -13,7 +11,6 @@ import {
   RefreshCw,
   ServerCog,
   ShieldCheck,
-  KeyRound,
   X,
   XCircle,
 } from "lucide-react";
@@ -180,7 +177,7 @@ export const InitialSetup = ({ onSetupComplete }: InitialSetupProps) => {
                 <div className="setup-field">
                   <div className="setup-field-heading">
                     <Label htmlFor="setup-password">Password</Label>
-                    <button onClick={handleGeneratePassword} type="button"><KeyRound aria-hidden="true" size={14} />{tr("Generate", "Genera")}</button>
+                    <button onClick={handleGeneratePassword} type="button">{tr("Generate", "Genera")}</button>
                   </div>
                   <div className="setup-password-field">
                     <Input id="setup-password" type={showPassword ? "text" : "password"} autoComplete="new-password" value={password} onChange={(event) => setPassword(event.target.value)} />
@@ -225,13 +222,13 @@ export const InitialSetup = ({ onSetupComplete }: InitialSetupProps) => {
             {step === 0 ? (
               <Button onClick={() => void refreshChecks()} type="button" variant="outline" disabled={checksLoading}><RefreshCw className={checksLoading ? "setup-spinner" : ""} size={16} />{tr("Run again", "Ripeti controllo")}</Button>
             ) : (
-              <Button onClick={() => { setError(""); setStep((value) => Math.max(0, value - 1)); }} type="button" variant="outline"><ArrowLeft size={16} />{tr("Back", "Indietro")}</Button>
+              <Button onClick={() => { setError(""); setStep((value) => Math.max(0, value - 1)); }} type="button" variant="outline">{tr("Back", "Indietro")}</Button>
             )}
 
             {step < 2 ? (
-              <Button key="continue" className="setup-primary-button" disabled={step === 0 ? !setupStatus?.ready : !passwordReady || !passwordsMatch || (setupTokenRequired && !/^[a-f0-9]{64}$/i.test(setupToken))} onClick={() => { setError(""); setStep((value) => value + 1); }} type="button">{tr("Continue", "Continua")}<ArrowRight size={16} /></Button>
+              <Button key="continue" className="setup-primary-button" disabled={step === 0 ? !setupStatus?.ready : !passwordReady || !passwordsMatch || (setupTokenRequired && !/^[a-f0-9]{64}$/i.test(setupToken))} onClick={() => { setError(""); setStep((value) => value + 1); }} type="button">{tr("Continue", "Continua")}</Button>
             ) : (
-              <Button key="complete" className="setup-primary-button" disabled={isLoading} type="submit">{isLoading ? <RefreshCw className="setup-spinner" size={16} /> : <ShieldCheck size={16} />}{isLoading ? tr("Creating workspace", "Creazione workspace") : tr("Complete setup", "Completa configurazione")}</Button>
+              <Button key="complete" className="setup-primary-button" disabled={isLoading} type="submit">{isLoading ? <RefreshCw className="setup-spinner" size={16} /> : null}{isLoading ? tr("Creating workspace", "Creazione workspace") : tr("Complete setup", "Completa configurazione")}</Button>
             )}
           </footer>
         </form>

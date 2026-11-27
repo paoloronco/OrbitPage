@@ -1,7 +1,7 @@
 "use client";
 
 import ColorizeOutlined from "@mui/icons-material/ColorizeOutlined";
-import ExpandMoreRounded from "@mui/icons-material/ExpandMoreRounded";
+
 import { HexColorPicker } from "react-colorful";
 import {
   type CSSProperties,
@@ -193,7 +193,7 @@ export function ColorPicker({
       >
         <span aria-hidden="true" className="orbit-color-picker__swatch" style={{ backgroundColor: resolvedValue }} />
         <code>{resolvedValue.toUpperCase()}</code>
-        <ExpandMoreRounded aria-hidden="true" className={open ? "is-open" : ""} fontSize="small" />
+
       </button>
       {popover}
     </div>

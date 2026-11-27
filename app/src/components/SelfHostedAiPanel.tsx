@@ -5,7 +5,6 @@ import { FormEvent, type ReactNode, useEffect, useMemo, useRef, useState } from 
 import {
   AlertCircle,
   Check,
-  ChevronRight,
   Eye,
   EyeOff,
   ImagePlus,
@@ -329,7 +328,7 @@ export function SelfHostedAiPanel({ canManageSettings, historyKey = "admin", onA
                   onClick={() => void applyProposal()}
                   type="button"
                 >
-                  {applying ? <OrbitLoader size={16} state="weaving" /> : <Check className="h-4 w-4" />}
+                  {applying ? <OrbitLoader size={16} state="weaving" /> : null}
                   {applying ? tr("Applying…", "Applicazione…") : tr("Apply changes", "Applica modifiche")}
                 </Button>
                 <Button
@@ -488,7 +487,7 @@ export function SelfHostedAiPanel({ canManageSettings, historyKey = "admin", onA
                     disabled={savingSettings || !settings?.canStoreSecurely || (!apiKey.trim() && selectedModel === settings?.model)}
                     type="submit"
                   >
-                    {savingSettings ? <OrbitLoader size={16} state="connecting" /> : settingsSaved ? <Check className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+                    {savingSettings ? <OrbitLoader size={16} state="connecting" /> : settingsSaved ? null : null}
                     {savingSettings ? tr("Saving…", "Salvataggio…") : settingsSaved ? tr("Saved", "Salvato") : tr("Save configuration", "Salva configurazione")}
                   </Button>
                   {settings?.source === "stored" && (
@@ -563,7 +562,7 @@ export function SelfHostedAiPanel({ canManageSettings, historyKey = "admin", onA
             disabled={!configured || launching || !launchScreenshot || !launchAttested}
             type="submit"
           >
-            {launching ? <OrbitLoader size={16} state="weaving" /> : <ImagePlus className="h-4 w-4" />}
+            {launching ? <OrbitLoader size={16} state="weaving" /> : null}
             {launching ? tr("Preparing preview…", "Preparazione anteprima…") : tr("Create preview", "Crea anteprima")}
           </Button>
         </form>

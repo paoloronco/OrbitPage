@@ -6,12 +6,9 @@ import {
   Check,
   Globe2,
   Image as ImageIcon,
-  ImageUp,
   LockKeyhole,
   MapPin,
   Palette,
-  RotateCcw,
-  Save,
   Layers3,
   Square,
   EyeOff,
@@ -520,7 +517,6 @@ export const ProfileSection = ({
             <ProfileSectionHeading title={tr("Page type", "Tipo di pagina")} />
             <div className="admin-profile-role-grid grid gap-3 sm:grid-cols-3" aria-label={tr("Profile type", "Tipo di profilo")}>
             {PROFILE_PRESETS.map((item) => {
-              const Icon = item.icon;
               const active = item.id === preset.id;
               const localized = localPreset(item);
               return (
@@ -531,9 +527,9 @@ export const ProfileSection = ({
                   onClick={() => updateAppearance({ profilePreset: item.id })}
                   className={`admin-profile-role-option relative flex min-h-0 items-center gap-3 rounded-lg border px-3 py-2.5 text-left transition-colors ${active ? "border-blue-500 bg-blue-50" : "border-slate-200 bg-white hover:border-slate-300"}`}
                 >
-                  <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-md ${active ? "bg-blue-600 text-white" : "bg-slate-100 text-slate-600"}`}><Icon className="h-4 w-4" /></span>
+
                   <strong className="min-w-0 pr-5 text-sm text-slate-950">{localized.label}</strong>
-                  {active && <Check className="absolute right-3 top-3 h-4 w-4 text-blue-700" />}
+
                 </button>
               );
             })}
@@ -553,7 +549,7 @@ export const ProfileSection = ({
                   <div className="admin-profile-image-column">
                     <button type="button" onClick={() => logoInputRef.current?.click()} className="admin-profile-image-picker group relative flex aspect-square w-full max-w-44 items-center justify-center overflow-hidden rounded-lg border border-slate-200 bg-slate-100">
                       <img src={getImageUrl(draft.avatar)} alt={tr("Profile image preview", "Anteprima immagine profilo")} className={`h-full w-full ${hasCustomAvatar ? "object-cover" : "object-contain p-5"}`} />
-                      <span className="absolute inset-x-2 bottom-2 flex items-center justify-center gap-1.5 rounded-md bg-slate-950/85 px-2 py-1.5 text-xs font-semibold text-white transition-colors group-hover:bg-slate-950"><ImageUp className="h-3.5 w-3.5" /> {tr("Replace", "Sostituisci")}</span>
+                      <span className="absolute inset-x-2 bottom-2 flex items-center justify-center gap-1.5 rounded-md bg-slate-950/85 px-2 py-1.5 text-xs font-semibold text-white transition-colors group-hover:bg-slate-950"> {tr("Replace", "Sostituisci")}</span>
                     </button>
                     <p className="admin-profile-image-help text-[11px] leading-4 text-slate-500">{tr("PNG, JPG, GIF, WebP, or AVIF.", "PNG, JPG, GIF, WebP o AVIF.")}</p>
                   </div>
@@ -630,7 +626,7 @@ export const ProfileSection = ({
               </div>
               <button type="button" onClick={() => setFaviconDialogOpen(true)} className="flex items-center gap-3 rounded-lg bg-slate-50 p-3 text-left transition-colors hover:bg-blue-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/30">
                 <span className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-white shadow-sm ring-1 ring-slate-200">
-                  {faviconValue && /^(?:https?:|data:image\/|blob:|\/)/i.test(faviconValue) ? <img className="h-full w-full object-contain p-1" src={getImageUrl(faviconValue)} alt={tr("Favicon preview", "Anteprima favicon")} /> : <ImageIcon className="h-5 w-5 text-slate-400" />}
+                  {faviconValue && /^(?:https?:|data:image\/|blob:|\/)/i.test(faviconValue) ? <img className="h-full w-full object-contain p-1" src={getImageUrl(faviconValue)} alt={tr("Favicon preview", "Anteprima favicon")} /> : null}
                 </span>
                 <span><strong className="block text-sm text-slate-950">Favicon</strong><small className="mt-1 block text-xs leading-5 text-slate-500">{tr("Custom browser icon.", "Icona personalizzata del browser.")}</small></span>
               </button>
@@ -685,7 +681,6 @@ export const ProfileSection = ({
                   { id: "image", label: tr("Image", "Immagine"), icon: ImageIcon },
                   { id: "liquid-glass", label: "Liquid glass", icon: Layers3 },
                 ] as const).map((option) => {
-                  const Icon = option.icon;
                   const active = selectedCardStyle === option.id;
                   return (
                     <button
@@ -695,7 +690,7 @@ export const ProfileSection = ({
                       onClick={() => selectCardStyle(option.id)}
                       className={`flex min-h-0 items-center gap-2 rounded-lg border px-3 py-2.5 text-left transition-colors ${active ? "border-blue-500 bg-blue-50" : "border-slate-200 bg-white hover:border-blue-300"}`}
                     >
-                      <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-md ${active ? "bg-blue-600 text-white" : "bg-slate-100 text-slate-600"}`}><Icon className="h-4 w-4" /></span>
+
                       <strong className="text-xs text-slate-950">{option.label}</strong>
                     </button>
                   );
@@ -750,9 +745,9 @@ export const ProfileSection = ({
                 >
                   {cardBackgroundImage
                     ? <img src={cardBackgroundImage} alt="" className="h-full w-full object-cover" />
-                    : <ImageIcon className="h-7 w-7 text-slate-400" />}
+                    : null}
                   <span className="absolute inset-x-2 bottom-2 mx-auto flex w-fit items-center gap-1.5 rounded-md bg-slate-950/85 px-2.5 py-1.5 text-xs font-semibold text-white transition-colors group-hover:bg-slate-950">
-                    <ImageUp className="h-3.5 w-3.5" /> {cardBackgroundImage ? tr("Replace", "Sostituisci") : tr("Choose image", "Scegli immagine")}
+                     {cardBackgroundImage ? tr("Replace", "Sostituisci") : tr("Choose image", "Scegli immagine")}
                   </span>
                 </button>
               </div>}
@@ -847,10 +842,10 @@ export const ProfileSection = ({
           {(isDirty || isSaving) && (
             <div className="admin-profile-save-float" data-onboarding="profile-actions">
               <Button type="button" variant="outline" size="sm" onClick={resetDraft} disabled={isSaving}>
-                <RotateCcw className="h-4 w-4" /> {tr("Revert", "Ripristina")}
+                 {tr("Revert", "Ripristina")}
               </Button>
               <Button type="button" size="sm" onClick={handleSave} disabled={isSaving}>
-                {isSaving ? <OrbitLoader size={16} state="composing" /> : <Save className="h-4 w-4" />}
+                {isSaving ? <OrbitLoader size={16} state="composing" /> : null}
                 {isSaving ? tr("Saving", "Salvataggio") : tr("Save", "Salva")}
               </Button>
             </div>
@@ -884,7 +879,7 @@ export const ProfileSection = ({
             <DialogDescription>{tr("Upload a square image for browser tabs and saved shortcuts. It can be different from the public profile image.", "Carica un'immagine quadrata per le schede del browser e i collegamenti salvati. Può essere diversa dall'immagine profilo pubblica.")}</DialogDescription>
           </DialogHeader>
           <button type="button" onClick={() => faviconInputRef.current?.click()} className="flex min-h-40 flex-col items-center justify-center gap-3 rounded-lg border border-dashed border-slate-300 bg-slate-50 p-6 text-center hover:border-blue-400 hover:bg-blue-50/50">
-            {faviconValue ? <img src={getImageUrl(faviconValue)} alt={tr("Selected favicon", "Favicon selezionata")} className="h-16 w-16 rounded-lg border border-slate-200 bg-white object-contain p-1" /> : <ImageUp className="h-8 w-8 text-slate-400" />}
+            {faviconValue ? <img src={getImageUrl(faviconValue)} alt={tr("Selected favicon", "Favicon selezionata")} className="h-16 w-16 rounded-lg border border-slate-200 bg-white object-contain p-1" /> : null}
             <span><strong className="block text-sm text-slate-950">{tr("Choose favicon image", "Scegli immagine favicon")}</strong><small className="mt-1 block text-xs text-slate-500">{tr("PNG, JPG, GIF, WebP, or AVIF.", "PNG, JPG, GIF, WebP o AVIF.")}</small></span>
           </button>
           <input ref={faviconInputRef} type="file" accept={RASTER_IMAGE_ACCEPT} className="hidden" onChange={(event) => { const file = event.target.files?.[0]; if (file) void prepareImage(file, "favicon"); event.target.value = ""; }} />

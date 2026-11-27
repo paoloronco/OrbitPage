@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { AlertTriangle, CheckCircle2, Database, Download, Files, Search, Trash2, Upload, X } from "@/components/ui/material-icons";
+import { AlertTriangle, CheckCircle2, Database, Files, X } from "@/components/ui/material-icons";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { OrbitLoader } from "@/components/ui/orbit-loader";
@@ -395,7 +395,7 @@ export function BackupManager({ hosted = false, canRestore = true }: BackupManag
           disabled={busy || exportSections.length === 0}
           aria-busy={state === "exporting"}
         >
-          {state === "exporting" ? <OrbitLoader size={16} state="composing" /> : <Download className="h-4 w-4" />}
+          {state === "exporting" ? <OrbitLoader size={16} state="composing" /> : null}
           {state === "exporting" ? tr("Exporting", "Esportazione") : tr("Download selected", "Scarica selezione")}
         </Button>
       </section>
@@ -434,7 +434,7 @@ export function BackupManager({ hosted = false, canRestore = true }: BackupManag
             )}
             <div className="flex flex-col gap-2 sm:flex-row">
               <Button type="button" className="admin-action admin-action-primary" onClick={() => void restoreBackup()} disabled={busy || !canRestore || pendingRestore.selectedSections.length === 0}>
-                {state === "restoring" ? <OrbitLoader size={16} state="weaving" /> : <Upload className="h-4 w-4" />}
+                {state === "restoring" ? <OrbitLoader size={16} state="weaving" /> : null}
                 {state === "restoring" ? tr("Restoring", "Ripristino") : tr("Restore selected", "Ripristina selezione")}
               </Button>
               <Button type="button" variant="outline" className="admin-action" onClick={cancelRestore} disabled={busy}>{tr("Cancel", "Annulla")}</Button>
@@ -448,7 +448,7 @@ export function BackupManager({ hosted = false, canRestore = true }: BackupManag
             onClick={() => fileInputRef.current?.click()}
             disabled={busy || DEMO_MODE || !canRestore}
           >
-            <Upload className="h-4 w-4" />
+
             {tr("Open backup file", "Apri file di backup")}
           </Button>
         )}
@@ -486,11 +486,11 @@ export function BackupManager({ hosted = false, canRestore = true }: BackupManag
             )}
             <div className="flex flex-col gap-2 sm:flex-row">
               <Button type="button" variant="outline" className="admin-action" onClick={() => void inspectUnusedMedia()} disabled={Boolean(cleanupBusy)}>
-                {cleanupBusy === "preview" ? <OrbitLoader size={16} state="searching" /> : <Search className="h-4 w-4" />}
+                {cleanupBusy === "preview" ? <OrbitLoader size={16} state="searching" /> : null}
                 {tr("Check unused media", "Controlla media inutilizzati")}
               </Button>
               <Button type="button" variant="outline" className="admin-action" onClick={() => void cleanUnusedMedia()} disabled={Boolean(cleanupBusy) || DEMO_MODE || !canRestore || !cleanupReport?.unused}>
-                {cleanupBusy === "clean" ? <OrbitLoader size={16} state="working" /> : <Trash2 className="h-4 w-4" />}
+                {cleanupBusy === "clean" ? <OrbitLoader size={16} state="working" /> : null}
                 {tr("Clean now", "Pulisci ora")}
               </Button>
             </div>

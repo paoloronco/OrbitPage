@@ -1,5 +1,5 @@
 import { type FormEvent, useEffect, useState } from 'react';
-import { ArrowLeft, Check, LoaderCircle, Mail, MailX } from 'lucide-react';
+import { Check, LoaderCircle, Mail, MailX } from 'lucide-react';
 import { useLocation } from 'react-router-dom';
 import { apiPath, withPageRootPath } from '@/lib/base-path';
 import { NEWSLETTER_TRACKING_CONSENT_TEXT } from '@/lib/newsletter-types';
@@ -106,9 +106,9 @@ export default function Newsletter() {
         <label className="newsletter-consent"><input checked={consent} onChange={(event) => setConsent(event.target.checked)} required type="checkbox" /><span>I want to receive email updates from {landing.fromName}. I can unsubscribe at any time.{landing.privacyPolicyUrl && <> <a href={landing.privacyPolicyUrl} rel="noreferrer" target="_blank">Privacy Policy</a>.</>}{landing.termsUrl && <> <a href={landing.termsUrl} rel="noreferrer" target="_blank">Terms</a>.</>}</span></label>
         {error && <p className="error" role="alert">{error}</p>}
         <label className="newsletter-consent"><input checked={trackingConsent} onChange={(event) => setTrackingConsent(event.target.checked)} type="checkbox" /><span>{tr(NEWSLETTER_TRACKING_CONSENT_TEXT, 'Facoltativo: acconsento alla misurazione delle aperture delle mie email e dei clic sui link per aiutare il mittente a migliorare questa newsletter. Posso revocare il consenso da ogni email senza annullare l’iscrizione.')}</span></label>
-        <button aria-busy={sending} className="button" disabled={sending} type="submit">{sending ? <LoaderCircle aria-hidden="true" className="animate-spin" size={16} /> : <Mail aria-hidden="true" size={17} />}{sending ? 'Sending confirmation' : 'Subscribe'}</button>
+        <button aria-busy={sending} className="button" disabled={sending} type="submit">{sending ? <LoaderCircle aria-hidden="true" className="animate-spin" size={16} /> : null}{sending ? 'Sending confirmation' : 'Subscribe'}</button>
       </form>}
-      <a className="newsletter-back-link" href={withPageRootPath('/')}><ArrowLeft aria-hidden="true" size={15} />Back to the public page</a>
+      <a className="newsletter-back-link" href={withPageRootPath('/')}>Back to the public page</a>
     </> : <><h1>Newsletter unavailable</h1><p role="alert">{error}</p><a href={withPageRootPath('/')}>Back to the public page</a></>}
   </section></main>;
 }

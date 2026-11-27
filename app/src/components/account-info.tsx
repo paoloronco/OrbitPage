@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from 'react';
-import { CheckCircle2, ExternalLink, Info, RefreshCw, ShieldCheck, AlertTriangle } from './ui/material-icons';
+import { CheckCircle2, Info, ShieldCheck, AlertTriangle } from './ui/material-icons';
 import { OrbitLoader } from './ui/orbit-loader';
 
 type CheckStatus = 'ok' | 'warning' | 'error' | 'unavailable';
@@ -53,7 +53,7 @@ export default function AccountInfo({ request, tr, documentationUrl, faqUrl }: {
   return <div className="account-info-workspace" aria-labelledby="account-info-title">
     <section className="account-info-panel">
       <header className="account-info-heading"><div><h2 id="account-info-title">INFO</h2><p>{tr('Current configuration and service status.', 'Configurazione attuale e stato dei servizi.')}</p></div>
-        <button type="button" className="account-info-refresh" disabled={loading} aria-busy={loading} onClick={reload}><RefreshCw aria-hidden="true" />{tr('Refresh', 'Aggiorna')}</button></header>
+        <button type="button" className="account-info-refresh" disabled={loading} aria-busy={loading} onClick={reload}>{tr('Refresh', 'Aggiorna')}</button></header>
       {loading && <div role="status" className="account-info-loading"><OrbitLoader size={24} />{tr('Checking…', 'Verifica…')}</div>}
       {failed && <p role="alert">{tr('Information could not be verified. Refresh to try again.', 'Impossibile verificare le informazioni. Aggiorna per riprovare.')}</p>}
       {data && <>
@@ -78,6 +78,6 @@ export default function AccountInfo({ request, tr, documentationUrl, faqUrl }: {
       <p className="account-info-timestamp">{tr('Dependency audit checked at', 'Dipendenze controllate il')}: <time dateTime={data.instance.audit.checkedAt}>{new Date(data.instance.audit.checkedAt).toLocaleString()}</time></p>
       <p className="account-info-note">{tr('These checks cover this application and its production dependency inventory. Host security, backups, Windows permissions and external provider availability need separate verification.', 'Questi controlli coprono applicazione e inventario delle dipendenze di produzione. Sicurezza host, backup, permessi Windows e disponibilità dei provider esterni richiedono verifiche separate.')}</p>
     </section>}
-    <section className="account-info-panel account-info-support"><a href={documentationUrl} target="_blank" rel="noopener noreferrer">{tr('Documentation', 'Documentazione')}<ExternalLink aria-hidden="true" /></a><a href={faqUrl} target="_blank" rel="noopener noreferrer">FAQ<ExternalLink aria-hidden="true" /></a></section>
+    <section className="account-info-panel account-info-support"><a href={documentationUrl} target="_blank" rel="noopener noreferrer">{tr('Documentation', 'Documentazione')}</a><a href={faqUrl} target="_blank" rel="noopener noreferrer">FAQ</a></section>
   </div>;
 }

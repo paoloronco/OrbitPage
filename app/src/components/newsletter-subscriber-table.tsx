@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState, type ComponentType } from "react";
-import { ArrowDown, ArrowUp, ArrowUpDown, ChevronLeft, ChevronRight, Search, Trash2 } from "lucide-react";
+import { ChevronLeft, ChevronRight, Search, Trash2 } from "lucide-react";
 import { newsletterTrackingAllowed, type NewsletterSubscriber } from "../lib/newsletter-types";
 
 type SortColumn = "subscriber" | "status" | "source" | "tracking" | "createdAt";
@@ -91,7 +91,7 @@ export default function NewsletterSubscriberTable({ subscribers, total, action, 
         <thead><tr>{columns.map(column => <th key={column.id} scope="col" aria-sort={sort.column === column.id ? sort.descending ? "descending" : "ascending" : "none"}>
           <button className="newsletter-sort-button" type="button" onClick={() => {
             setSort(previous => ({ column: column.id, descending: previous.column === column.id ? !previous.descending : column.id === "createdAt" })); setPage(1);
-          }}>{column.label}{sort.column === column.id ? sort.descending ? <ArrowDown aria-hidden="true" size={13} /> : <ArrowUp aria-hidden="true" size={13} /> : <ArrowUpDown aria-hidden="true" size={13} />}</button>
+          }}>{column.label}</button>
         </th>)}<th scope="col"><span className="sr-only">{tr("Actions", "Azioni")}</span></th></tr></thead>
         <tbody>{rows.slice(start, start + pageSize).map(item => <tr key={item.subscriberId}>
           <td><strong>{item.name || item.email}</strong>{item.name && <span>{item.email}</span>}</td>

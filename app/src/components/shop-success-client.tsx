@@ -2,7 +2,7 @@
 
 import { shopOrderLabel } from "../../packages/shop/orders.js";
 
-import { ArrowRight, CalendarDays, CheckCircle2, FileText, Hourglass } from "lucide-react";
+import { CalendarDays, CheckCircle2, FileText, Hourglass } from "lucide-react";
 import { useEffect, useState } from "react";
 import { OrbitLoader as LoadingIndicator } from "./ui/orbit-loader";
 import { ShopPurchaseFiles, ShopPurchaseLayout, type ShopPurchasePresentation } from "./shop-purchase-layout";
@@ -114,7 +114,7 @@ export default function ShopSuccessClient({
             <h3>{delivery.bookingUrl ? "Choose your appointment" : "Next steps"}</h3>
             {delivery.fulfillmentText && <p>{delivery.fulfillmentText}</p>}
             {delivery.bookingUrl && delivery.sessionsRemaining > 0 ? (
-              <a className="shop-purchase-button primary shop-booking-action" href={delivery.bookingUrl} rel="noreferrer" target="_blank"><CalendarDays size={17} aria-hidden="true" /> Choose date and time</a>
+              <a className="shop-purchase-button primary shop-booking-action" href={delivery.bookingUrl} rel="noreferrer" target="_blank"> Choose date and time</a>
             ) : (
               !delivery.fulfillmentText && <p>The seller will contact you with the next steps.</p>
             )}
@@ -124,7 +124,7 @@ export default function ShopSuccessClient({
         </section>
         <aside className="shop-purchase-sidebar">
           <section className="shop-purchase-card"><h2>Order details</h2><dl className="shop-purchase-details shop-success-product"><div><dt>Order</dt><dd>{shopOrderLabel(delivery)}</dd></div>{delivery.paidAt && <div><dt>Date</dt><dd>{new Date(delivery.paidAt).toLocaleDateString("en-US", { dateStyle: "medium" })}</dd></div>}<div className="shop-purchase-total"><dt>Total paid</dt><dd>{money(delivery.amountTotal, delivery.currency)}</dd></div></dl><p className="shop-purchase-note">Payment processed by Stripe.</p></section>
-          {delivery.customerPortalUrl && <section className="shop-purchase-card shop-purchase-access"><h2>Your purchases</h2><p>Find your files, appointments and service details here.</p><a className="shop-purchase-button secondary" href={delivery.customerPortalUrl}>View your purchases <ArrowRight size={17} aria-hidden="true" /></a>{delivery.intakeQuestions.length > 0 && <p className="shop-purchase-note">Your service includes a questionnaire. Complete it before your appointment.</p>}</section>}
+          {delivery.customerPortalUrl && <section className="shop-purchase-card shop-purchase-access"><h2>Your purchases</h2><p>Find your files, appointments and service details here.</p><a className="shop-purchase-button secondary" href={delivery.customerPortalUrl}>View your purchases </a>{delivery.intakeQuestions.length > 0 && <p className="shop-purchase-note">Your service includes a questionnaire. Complete it before your appointment.</p>}</section>}
         </aside>
       </div>
     </ShopPurchaseLayout>

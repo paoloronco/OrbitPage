@@ -1,5 +1,5 @@
 import { useRef, useState, type CSSProperties, type ComponentProps } from "react";
-import { MousePointer2, Palette, UserRound, Layers3, SlidersHorizontal, ArrowRight } from "lucide-react";
+import { MousePointer2, Palette, UserRound, Layers3, SlidersHorizontal } from "lucide-react";
 import { Button } from "./ui/button";
 import { ColorPicker } from "./ui/color-picker";
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from "./ui/dialog";
@@ -72,7 +72,7 @@ export function ThemeFineTuning({ theme, profile, links, device, onThemeChange, 
       <h3>{tr("Choose what to personalize", "Scegli cosa personalizzare")}</h3>
       <p>{tr("Click a card or your profile in the preview. Only the controls for that element will open.", "Clicca una card o il profilo nell’anteprima. Si aprono solo i controlli per quell’elemento.")}</p>
       <div className="theme-fine-targets">
-        {([ ["page", Palette, tr("Page background", "Sfondo pagina"), tr("Color, gradient, image or video", "Colore, gradiente, immagine o video")], ["profile", UserRound, tr("Profile", "Profilo"), tr("Surface, text and photo", "Superficie, testo e foto")], ["cards", Layers3, tr("Shared card style", "Stile condiviso delle card"), tr("The starting style for your cards", "Lo stile di partenza delle tue card")], ["layout", SlidersHorizontal, tr("Page layout", "Layout pagina"), tr("Spacing, shape and typography", "Spaziature, forme e caratteri")] ] as const).map(([id, Icon, label, detail]) => <button key={id} type="button" onClick={() => open(id)} disabled={saving}><Icon size={20} /><span><strong>{label}</strong><small>{detail}</small></span><ArrowRight size={16} /></button>)}
+        {([ ["page", Palette, tr("Page background", "Sfondo pagina"), tr("Color, gradient, image or video", "Colore, gradiente, immagine o video")], ["profile", UserRound, tr("Profile", "Profilo"), tr("Surface, text and photo", "Superficie, testo e foto")], ["cards", Layers3, tr("Shared card style", "Stile condiviso delle card"), tr("The starting style for your cards", "Lo stile di partenza delle tue card")], ["layout", SlidersHorizontal, tr("Page layout", "Layout pagina"), tr("Spacing, shape and typography", "Spaziature, forme e caratteri")] ] as const).map(([id, , label, detail]) => <button key={id} type="button" onClick={() => open(id)} disabled={saving}><span><strong>{label}</strong><small>{detail}</small></span></button>)}
       </div>
       <p className="theme-fine-hint">{tr("Changes stay in your draft until you save.", "Le modifiche restano in bozza fino al salvataggio.")}</p>
     </aside>

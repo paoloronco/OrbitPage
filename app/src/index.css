@@ -634,7 +634,7 @@ html:has(.orbitpage-admin) {
 
 .privacy-review-actions button {
   display: grid;
-  grid-template-columns: 28px minmax(0, 1fr) 18px;
+  grid-template-columns: minmax(0, 1fr);
   gap: 10px;
   align-items: center;
   border: 1px solid var(--privacy-line);

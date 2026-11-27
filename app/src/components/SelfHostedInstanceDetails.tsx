@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Database, Download, ExternalLink, RefreshCw, ShieldCheck, Sliders } from '@/components/ui/material-icons';
+import { Database, ExternalLink, RefreshCw, ShieldCheck, Sliders } from '@/components/ui/material-icons';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
@@ -100,7 +100,7 @@ export function SelfHostedInstanceDetails({ canManageInstance, version, onInstal
             </div>
             <div className="instance-environment-actions">
               <p>{tr('View and manage the environment variables used by this installation.', 'Visualizza e gestisci le variabili ambiente usate da questa installazione.')}</p>
-              <Button type="button" variant="outline" className="account-secondary-action" disabled={!instance} onClick={() => { setEnvironmentError(''); setEnvironmentOpen(true); }}><Sliders className="h-4 w-4" />{tr('Environment variables…', 'Variabili ambiente…')}</Button>
+              <Button type="button" variant="outline" className="account-secondary-action" disabled={!instance} onClick={() => { setEnvironmentError(''); setEnvironmentOpen(true); }}>{tr('Environment variables…', 'Variabili ambiente…')}</Button>
               {restartRequired && <span role="status">{tr('Restart the instance to apply the saved changes.', 'Riavvia l’istanza per applicare le modifiche salvate.')}</span>}
             </div>
           </section>}
@@ -119,11 +119,11 @@ export function SelfHostedInstanceDetails({ canManageInstance, version, onInstal
             </p>
             <div className="account-instance-update-actions">
               <Button type="button" className="account-secondary-action" variant="outline" disabled={checkingUpdates} aria-busy={checkingUpdates} onClick={() => void checkUpdates()}><RefreshCw className={`h-4 w-4${checkingUpdates ? ' animate-spin' : ''}`} />{tr('Check for updates', 'Verifica aggiornamenti')}</Button>
-              <Button type="button" className="account-primary-action" variant="gradient" disabled={!update?.updateAvailable || checkingUpdates || DEMO_MODE || !canManageInstance} onClick={() => update && onInstallUpdate(update.version)}><Download className="h-4 w-4" />{tr('Install update…', 'Installa aggiornamento…')}</Button>
+              <Button type="button" className="account-primary-action" variant="gradient" disabled={!update?.updateAvailable || checkingUpdates || DEMO_MODE || !canManageInstance} onClick={() => update && onInstallUpdate(update.version)}>{tr('Install update…', 'Installa aggiornamento…')}</Button>
             </div>
             <div className="account-instance-release-slot">
               {update
-                ? <a className="account-instance-release-link" href={update.releaseUrl} target="_blank" rel="noopener noreferrer"><ExternalLink className="h-3 w-3" />{tr('Release notes', 'Note di rilascio')}</a>
+                ? <a className="account-instance-release-link" href={update.releaseUrl} target="_blank" rel="noopener noreferrer">{tr('Release notes', 'Note di rilascio')}</a>
                 : <span className="account-instance-release-link is-placeholder" aria-hidden="true"><ExternalLink className="h-3 w-3" />{tr('Release notes', 'Note di rilascio')}</span>}
             </div>
           </section>

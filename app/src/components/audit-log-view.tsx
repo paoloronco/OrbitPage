@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { History, ListFilter, RotateCcw, Search } from 'lucide-react';
+import { History, RotateCcw, Search } from 'lucide-react';
 
 export type AuditFilters = { q: string; actor: string; action: string; from: string; to: string };
 const EMPTY_AUDIT_FILTERS: AuditFilters = { q: '', actor: '', action: '', from: '', to: '' };
@@ -19,7 +19,7 @@ export default function AuditLogView({ tr, retention, events, loading, error, ha
       <label><span>{tr('Action', 'Azione')}</span><input className="input" maxLength={100} onChange={(event) => setDraft({ ...draft, action: event.target.value })} placeholder={tr('Action name', 'Nome azione')} value={draft.action} /></label>
       <label><span>{tr('From', 'Dal')}</span><input className="input" max={draft.to || undefined} onChange={(event) => setDraft({ ...draft, from: event.target.value })} type="date" value={draft.from} /></label>
       <label><span>{tr('To', 'Al')}</span><input className="input" min={draft.from || undefined} onChange={(event) => setDraft({ ...draft, to: event.target.value })} type="date" value={draft.to} /></label>
-      <div className="audit-filter-actions"><button className="button" disabled={loading} type="submit"><ListFilter aria-hidden="true" size={16} />{tr('Apply filters', 'Applica filtri')}</button><button className="button secondary" disabled={loading} type="button" onClick={() => { setDraft(EMPTY_AUDIT_FILTERS); onApply({ ...EMPTY_AUDIT_FILTERS }); }} aria-label={tr('Reset filters', 'Azzera filtri')} title={tr('Reset filters', 'Azzera filtri')}><RotateCcw aria-hidden="true" size={16} /></button></div>
+      <div className="audit-filter-actions"><button className="button" disabled={loading} type="submit">{tr('Apply filters', 'Applica filtri')}</button><button className="button secondary" disabled={loading} type="button" onClick={() => { setDraft(EMPTY_AUDIT_FILTERS); onApply({ ...EMPTY_AUDIT_FILTERS }); }} aria-label={tr('Reset filters', 'Azzera filtri')} title={tr('Reset filters', 'Azzera filtri')}><RotateCcw aria-hidden="true" size={16} /></button></div>
     </form>
     {error && <p className="error" role="alert">{tr('Could not load audit events. Apply filters to try again.', 'Impossibile caricare il registro. Applica i filtri per riprovare.')}</p>}
     <div className="audit-log-table-wrap" role="region" aria-label={tr('Audit log', 'Registro attività')} tabIndex={0} aria-busy={loading}>

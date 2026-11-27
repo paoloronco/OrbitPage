@@ -1,5 +1,5 @@
 import { lazy, Suspense, useRef, useState } from "react";
-import { Loader2, Upload, X } from "lucide-react";
+import { Loader2, X } from "lucide-react";
 import type { LinkData } from "./LinkCard";
 import { Button } from "./ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
@@ -68,7 +68,7 @@ export function BlockIconPicker({ value, onChange, onUpload, disabled = false }:
       </TabsContent>
       <TabsContent value="upload" className="space-y-2">
         <Button type="button" variant="outline" disabled={disabled} onClick={() => input.current?.click()}>
-          {disabled ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Upload className="mr-2 h-4 w-4" />}
+          {disabled ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
           {tr("Upload and optimize icon", "Carica e ottimizza icona")}
         </Button>
         <input ref={input} type="file" accept={RASTER_IMAGE_ACCEPT} aria-label={tr("Upload custom icon", "Carica icona personalizzata")} className="hidden" disabled={disabled}

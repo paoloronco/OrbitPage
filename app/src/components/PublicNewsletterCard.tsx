@@ -72,7 +72,7 @@ export function PublicNewsletterCard({ link }: { link: LinkData }) {
                 <input autoComplete="email" className="h-11 w-full rounded-md border border-border bg-background/70 px-3 text-sm text-foreground outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20" maxLength={254} onChange={(event) => setEmail(event.target.value)} placeholder="Email" required type="email" value={email} />
               </label>
               <button aria-busy={state === "sending"} className="inline-flex h-11 shrink-0 items-center justify-center gap-2 rounded-md bg-primary px-5 text-sm font-semibold text-primary-foreground transition hover:bg-primary/90 disabled:cursor-wait disabled:opacity-60" disabled={state === "sending" || !privacyPolicyUrl} style={getPublicButtonStyle(link)} type="submit">
-                {state === "sending" ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <Mail className="h-4 w-4" />}
+                {state === "sending" ? <LoaderCircle className="h-4 w-4 animate-spin" /> : null}
                 {state === "sending" ? tr("Sending", "Invio") : tr("Subscribe", "Iscriviti")}
               </button>
             </div>

@@ -5,25 +5,18 @@ import { ShopDeviceFrame } from "./ShopDeviceFrame";
 import { usePreviewDeviceSlot } from "../lib/use-preview-device-slot";
 
 import {
-  ArrowUpRight,
   ArrowDown,
   ArrowUp,
   ArrowUpDown,
   CalendarDays,
   CheckCircle2,
-  ChevronLeft,
-  Copy,
   CreditCard,
-  Download,
-  Euro,
   FileArchive,
   Link2,
   LockKeyhole,
   MailPlus,
   Mail,
-  PackagePlus,
   Palette,
-  RefreshCw,
   ReceiptText,
   Search,
   ShieldCheck,
@@ -31,7 +24,6 @@ import {
   ShoppingBag,
   ShoppingCart,
   Trash2,
-  UploadCloud,
   X,
   RotateCcw,
   HelpCircle,
@@ -50,8 +42,8 @@ import { OrbitLoader as LoadingIndicator } from "./ui/orbit-loader";
 import ColorPicker from "./ui/color-picker";
 import RangeSlider from "./ui/range-slider";
 import ToggleSwitch from "./ui/toggle-switch";
-import { Save } from "./ui/material-icons";
-import RestartAltRounded from "@mui/icons-material/RestartAltRounded";
+
+
 import Tooltip from "@mui/material/Tooltip";
 import AccountInfo, { type AccountInfoData } from "./account-info";
 import { ShopCoupons, ShopStripeAccount } from "./ShopStripeTools";
@@ -512,7 +504,7 @@ function ShopStorefrontPreview({
             </article>
           );
         })}
-        {!products.length && <div className="shop-preview-empty"><ShoppingBag size={36} /><strong>No products available</strong><button className="button primary" disabled={disabled || !canAddProduct} onClick={onAddProduct} type="button"><PackagePlus size={16} /> Add product</button></div>}
+        {!products.length && <div className="shop-preview-empty"><ShoppingBag size={36} /><strong>No products available</strong><button className="button primary" disabled={disabled || !canAddProduct} onClick={onAddProduct} type="button"> Add product</button></div>}
       </div>
       {appearance.newsletterEnabled && <section className="shop-preview-newsletter">
         <MailPlus aria-hidden="true" size={22} />
@@ -536,7 +528,7 @@ function ShopStorefrontPreview({
         </div>
         <div className="shop-preview-footer-bottom">
           {footerPolicies.length > 0 && <nav aria-label="Shop policies">{footerPolicies.map((policy) => <a href={policy.url} key={policy.slug} rel="noreferrer" target="_blank">{policy.title}</a>)}</nav>}
-          <div className="shop-preview-assurance">{appearance.showStripePaymentNoticeInFooter !== false && <span><LockKeyhole aria-hidden="true" size={18} />{copy.securePayments}</span>}<span className="shop-preview-powered">Powered by <a href="https://orbitpage.com" rel="noreferrer" target="_blank">OrbitPage <ArrowUpRight aria-hidden="true" size={14} /></a></span></div>
+          <div className="shop-preview-assurance">{appearance.showStripePaymentNoticeInFooter !== false && <span><LockKeyhole aria-hidden="true" size={18} />{copy.securePayments}</span>}<span className="shop-preview-powered">Powered by <a href="https://orbitpage.com" rel="noreferrer" target="_blank">OrbitPage </a></span></div>
         </div>
       </footer>
     </div>
@@ -560,7 +552,7 @@ function ShopStorefrontPreview({
             {shopCheckoutAcknowledgements(appearance, detailsProduct.type).map(item => <label key={item.id}><input disabled type="checkbox" /><span>{item.label}{item.required ? "" : " (optional)"}</span></label>)}
             <div className="shop-product-detail-price"><strong>{money(detailsProduct.priceCents, "en", appearance.currency)}</strong><button disabled type="button">{copy.buy}</button></div>
           </div>
-          <footer className="shop-product-detail-edit"><button disabled={disabled} onClick={() => { onSelectProduct(detailsProduct.productId); setDetailsProductId(null); }} type="button">Edit product<ArrowUpRight size={16} /></button></footer>
+          <footer className="shop-product-detail-edit"><button disabled={disabled} onClick={() => { onSelectProduct(detailsProduct.productId); setDetailsProductId(null); }} type="button">Edit product</button></footer>
         </div>
       </ShopDialog>}
     </>
@@ -653,7 +645,7 @@ function OwnerStripeSettings({ request, saved, livemode, onSaved, dashboardUrl }
   return <form className="shop-provider-form shop-stripe-configuration" onSubmit={event => void save(event)}>
     <header className="shop-stripe-configuration-heading">
       <div><h4>Your Stripe account</h4><p className="shop-provider-muted">Payments and payouts stay with your account.</p></div>
-      <a className="button secondary compact" href={dashboardUrl} rel="noreferrer" target="_blank"><ArrowUpRight size={16} /> Stripe Dashboard</a>
+      <a className="button secondary compact" href={dashboardUrl} rel="noreferrer" target="_blank"> Stripe Dashboard</a>
     </header>
     <fieldset disabled={busy}>
       {saved?.environmentManaged ? <p className="shop-provider-muted">Stripe credentials are configured through server environment variables.</p> : <div className="shop-option-grid">
@@ -664,7 +656,7 @@ function OwnerStripeSettings({ request, saved, livemode, onSaved, dashboardUrl }
       <p className="shop-provider-muted">Create a webhook in the same Stripe account and mode using this endpoint{!saved?.environmentManaged && ", then enter its signing secret above"}. Subscribe to checkout.session.completed, checkout.session.async_payment_succeeded, checkout.session.async_payment_failed, checkout.session.expired, charge.refunded, charge.dispute.created and charge.dispute.closed.</p>
       {goingLive && <p className="shop-feedback" role="status">Saving live credentials automatically clears test orders, customers, bookings and queued emails. Your products, files and shop settings are kept, and live order numbering starts at 1.</p>}
       {saved?.accountId && <small>Account: {saved.accountId}</small>}
-      {!saved?.environmentManaged && <button className="button primary" disabled={busy} type="submit">{busy ? <LoadingIndicator size={16} /> : <Save size={16} />} Save and verify Stripe</button>}
+      {!saved?.environmentManaged && <button className="button primary" disabled={busy} type="submit">{busy ? <LoadingIndicator size={16} /> : null} Save and verify Stripe</button>}
     </fieldset>
     {error && <p className="shop-feedback error" role="alert">{error}</p>}
   </form>;
@@ -1245,7 +1237,7 @@ export default function ShopClient({
   if (!data) return <div className="shop-empty" lang="en-US" dir="ltr"><ShoppingBag size={30} /><h2>Shop unavailable</h2><p>Reload the page to try again.</p></div>;
   if (!data.entitled) return (
     <section className="shop-plan-lock" lang="en-US" dir="ltr">
-      <div>{!embedded && <button className="shop-back-button" onClick={onBackToContent} type="button"><ChevronLeft size={16} /> Content</button>}<p className="dashboard-kicker">Digital commerce</p><h2>Sell from your OrbitPage</h2><p>Add digital downloads or bookable services without configuring Stripe keys. Shop is included with Pro.</p><ul><li>Secure Stripe checkout</li><li>Private file delivery</li><li>Orders and refunds kept in sync</li></ul><button className="button primary" onClick={onViewPlans} type="button">View Pro</button></div>
+      <div>{!embedded && <button className="shop-back-button" onClick={onBackToContent} type="button"> Content</button>}<p className="dashboard-kicker">Digital commerce</p><h2>Sell from your OrbitPage</h2><p>Add digital downloads or bookable services without configuring Stripe keys. Shop is included with Pro.</p><ul><li>Secure Stripe checkout</li><li>Private file delivery</li><li>Orders and refunds kept in sync</li></ul><button className="button primary" onClick={onViewPlans} type="button">View Pro</button></div>
       <div className="shop-lock-visual"><ShoppingBag size={46} /><span>Your page, your shop</span><small>OrbitPage keeps 5% per successful sale.</small></div>
     </section>
   );
@@ -1312,7 +1304,7 @@ export default function ShopClient({
     liveDraftProduct?.productId === product.productId ? liveDraftProduct : product
   ));
   if (liveDraftProduct && !draft.productId) previewProducts = [liveDraftProduct, ...previewProducts];
-  const addProductButton = <button aria-controls="shop-catalog" aria-expanded={productEditorOpen} aria-label="Add product" className="button primary compact shop-add-product-button" disabled={action !== null || data.products.length >= data.limits.maxProducts} onClick={openNewProduct} type="button"><PackagePlus size={16} /><span>Add product</span></button>;
+  const addProductButton = <button aria-controls="shop-catalog" aria-expanded={productEditorOpen} aria-label="Add product" className="button primary compact shop-add-product-button" disabled={action !== null || data.products.length >= data.limits.maxProducts} onClick={openNewProduct} type="button"><span>Add product</span></button>;
   const appearanceChanged = Boolean(logoFile || deleteProfilePending || (appearance && JSON.stringify(appearance) !== JSON.stringify(data.shop?.appearance)));
   const productChanged = productEditorOpen && Boolean(deleteProductPending || files.length || cover || JSON.stringify(draft) !== JSON.stringify(originalProduct ? productDraft(originalProduct) : EMPTY_PRODUCT));
   const emailChanged = emailDraftChanged(smtpDraft, data.shop?.emailSettings);
@@ -1343,7 +1335,7 @@ export default function ShopClient({
         }}
         type="button"
       >
-        {action === "publish" ? <LoadingIndicator size={16} /> : data.shop?.enabled ? <Download size={16} /> : <UploadCloud size={16} />}
+        {action === "publish" ? <LoadingIndicator size={16} /> : data.shop?.enabled ? null : null}
         {data.shop?.enabled ? "Unpublish" : "Publish shop"}
       </button>;
   const shopActions = (
@@ -1355,15 +1347,15 @@ export default function ShopClient({
     {deleteProductPending && <p className="shop-platform-note">This product will be deleted when you save. Revert restores it.</p>}
     <form className="shop-product-form" id="shop-product-form" onSubmit={(event) => { event.preventDefault(); void saveChanges(); }}><fieldset disabled={action !== null || deleteProductPending}>
       <div className="shop-kind-selector">
-        <button className={draft.type === "digital" ? "active" : ""} onClick={() => setDraft((current) => ({ ...current, type: "digital" }))} type="button"><FileArchive size={18} /><span><strong>Digital file</strong><small>PDF, ZIP, image or video</small></span></button>
-        <button className={draft.type === "service" ? "active" : ""} onClick={() => setDraft((current) => ({ ...current, type: "service" }))} type="button"><Euro size={18} /><span><strong>Service</strong><small>Consulting, session or booking</small></span></button>
+        <button className={draft.type === "digital" ? "active" : ""} onClick={() => setDraft((current) => ({ ...current, type: "digital" }))} type="button"><span><strong>Digital file</strong><small>PDF, ZIP, image or video</small></span></button>
+        <button className={draft.type === "service" ? "active" : ""} onClick={() => setDraft((current) => ({ ...current, type: "service" }))} type="button"><span><strong>Service</strong><small>Consulting, session or booking</small></span></button>
       </div>
       <label><span>Name</span><input maxLength={90} onChange={(event) => setDraft((current) => ({ ...current, title: event.target.value }))} placeholder="Brand kit" ref={productNameRef} required value={draft.title} /></label>
       <ShopDescriptionField label="Short description" maxLength={SHOP_SUMMARY_LIMIT} onChange={(summary) => setDraft((current) => ({ ...current, summary }))} required={false} value={draft.summary} />
       <ShopDescriptionField label="Full description" maxLength={SHOP_DESCRIPTION_LIMIT} onChange={(description) => setDraft((current) => ({ ...current, description }))} value={draft.description} />
       <label><span>Cover image <ShopHelp label="About cover image" text="JPEG, PNG, AVIF, WebP or GIF — max 5 MB — automatically fitted without stretching or cropping" /></span><input accept="image/jpeg,image/png,image/avif,image/webp,image/gif" onChange={(event) => setCover(event.target.files?.[0] || null)} type="file" />{draftCoverUrl && <img alt="Cover preview" className="shop-cover-upload-preview" src={new URL(draftCoverUrl, data.shop?.publicUrl || "https://orbitpage.com").toString()} />}{draft.productId && data.products.find((product) => product.productId === draft.productId)?.coverUrl && !cover && <small>Current cover image saved</small>}</label>
       <label><span>Price</span><span className="shop-price-input"><span>{(appearance?.currency || "eur").toUpperCase()}</span><input aria-label="Price" inputMode="decimal" min="1" onChange={(event) => setDraft((current) => ({ ...current, price: event.target.value }))} placeholder="15.00" required step="0.01" type="number" value={draft.price} /></span></label>
-      {draft.type === "digital" ? <div className="shop-product-files-field"><strong>Product files <ShopHelp label="About product files" text={`Up to 10 files — max ${maxFileLabel} each`} /></strong><button className="button secondary compact" onClick={() => setFilesDialogOpen(true)} type="button"><FileArchive size={16} /> Manage files</button><ul>{savedProductFiles.map((item) => <li key={item.id}><FileArchive size={14} /><span>{item.filename}</span><small>{fileSize(item.sizeBytes)} — Saved</small><button aria-label={`Remove uploaded ${item.filename}`} className="shop-delete-button" disabled={action !== null} onClick={() => removeSavedFile(item.id)} type="button"><Trash2 size={16} /></button></li>)}{files.map((file, index) => <li key={index}><FileArchive size={14} /><span>{file.name}</span><small>{fileSize(file.size)} — Selected</small></li>)}</ul></div> : <>
+      {draft.type === "digital" ? <div className="shop-product-files-field"><strong>Product files <ShopHelp label="About product files" text={`Up to 10 files — max ${maxFileLabel} each`} /></strong><button className="button secondary compact" onClick={() => setFilesDialogOpen(true)} type="button"> Manage files</button><ul>{savedProductFiles.map((item) => <li key={item.id}><FileArchive size={14} /><span>{item.filename}</span><small>{fileSize(item.sizeBytes)} — Saved</small><button aria-label={`Remove uploaded ${item.filename}`} className="shop-delete-button" disabled={action !== null} onClick={() => removeSavedFile(item.id)} type="button"><Trash2 size={16} /></button></li>)}{files.map((file, index) => <li key={index}><FileArchive size={14} /><span>{file.name}</span><small>{fileSize(file.size)} — Selected</small></li>)}</ul></div> : <>
         <label><span><span className="shop-label-with-icon"><CalendarDays size={16} /> Booking calendar</span></span><input maxLength={2048} onChange={(event) => setDraft((current) => ({ ...current, bookingUrl: event.target.value }))} placeholder="https://calendly.com/your-name/consulting" type="url" value={draft.bookingUrl} /><small>Calendly, Cal.com, Google Calendar or another secure HTTPS booking page. This link is revealed only after payment.</small></label>
         <label><span>Sessions included</span><input max="50" min="1" onChange={(event) => setDraft((current) => ({ ...current, sessionsIncluded: event.target.value }))} required type="number" value={draft.sessionsIncluded} /><small>Use more than one session to sell a consulting package.</small></label>
         <label><span>Pre-consultation questions</span><textarea maxLength={2400} onChange={(event) => setDraft((current) => ({ ...current, intakeQuestionsText: event.target.value }))} placeholder={"What would you like to achieve? *\nUseful links\nAnything we should know?"} rows={5} value={draft.intakeQuestionsText} /><small>One question per line, maximum 12. End a required question with *.</small></label>
@@ -1525,7 +1517,7 @@ export default function ShopClient({
       {!previewDeviceSlot && <div className="shop-preview-device-toolbar"><div className={`shop-preview-device-control${editingStorefront ? "" : " is-placeholder"}`} aria-hidden={!editingStorefront}><PreviewDeviceToggle value={device} onChange={setDevice} /></div></div>}
       {!embedded && <header className="shop-command-bar">
         <div className="shop-command-copy">
-          {!embedded && <button className="shop-back-button" onClick={onBackToContent} type="button"><ChevronLeft size={16} /> Content</button>}
+          {!embedded && <button className="shop-back-button" onClick={onBackToContent} type="button"> Content</button>}
           <div className="shop-command-title"><ShoppingBag size={18} /><strong>Shop</strong></div>
           <p>Sell downloads and services. Stripe verifies the seller, processes payments and pays out directly.</p>
         </div>
@@ -1540,12 +1532,12 @@ export default function ShopClient({
         <div className="shop-toolbar-left">
           <button aria-label="Shop settings" aria-pressed={view === "settings"} className="shop-tool-button" disabled={action !== null} onClick={() => setView("settings")} title="Settings" type="button"><Settings size={18} /></button>
           <button aria-label="Orders and customers" aria-pressed={view === "orders" || view === "customers"} className="shop-tool-button" disabled={action !== null} onClick={() => setView("orders")} title="Orders and customers" type="button"><ReceiptText size={18} /></button>
-          {editingStorefront && <button aria-label="Personalize" aria-expanded={view === "design"} aria-pressed={view === "design"} aria-controls="shop-personalization" className="shop-tool-button shop-personalize-button" disabled={action !== null} onClick={() => { setPersonalizeSection("shop"); setView(view === "design" ? "products" : "design"); }} title="Personalize" type="button"><Palette size={18} /><span>Personalize</span></button>}
+          {editingStorefront && <button aria-label="Personalize" aria-expanded={view === "design"} aria-pressed={view === "design"} aria-controls="shop-personalization" className="shop-tool-button shop-personalize-button" disabled={action !== null} onClick={() => { setPersonalizeSection("shop"); setView(view === "design" ? "products" : "design"); }} title="Personalize" type="button"><span>Personalize</span></button>}
         </div>
         <div className="shop-toolbar-publication">
           {publicationControl}
         </div>
-        <div className="shop-toolbar-right">{!editingStorefront && <button className="button secondary" disabled={action !== null} onClick={() => setView("products")} type="button"><ChevronLeft size={16} /> Back to shop</button>}{editingStorefront && data.products.length > 0 && <button aria-label="View catalog" className="button secondary compact shop-catalog-button" onClick={() => setCatalogOpen(true)} title="View catalog" type="button"><Search size={14} /><span>View catalog</span></button>}{editingStorefront && addProductButton}</div>
+        <div className="shop-toolbar-right">{!editingStorefront && <button className="button secondary" disabled={action !== null} onClick={() => setView("products")} type="button"> Back to shop</button>}{editingStorefront && data.products.length > 0 && <button aria-label="View catalog" className="button secondary compact shop-catalog-button" onClick={() => setCatalogOpen(true)} title="View catalog" type="button"><span>View catalog</span></button>}{editingStorefront && addProductButton}</div>
       </div>
 
       {editingStorefront && appearance && previewDesign && <div className={"shop-storefront-workspace" + (view === "design" || productEditorOpen ? " has-inspector" : "")}>
@@ -1606,8 +1598,8 @@ export default function ShopClient({
                       </div>
                     </div>
                     <div aria-label={`${policy.title} source`} className="shop-kind-selector" role="group">
-                      <button aria-pressed={source === "hosted"} className={source === "hosted" ? "active" : undefined} onClick={() => updatePolicy(policy, "hosted")} type="button"><ShieldCheck size={18} /><span><strong>Host in OrbitPage</strong><small>Write or paste the policy text.</small></span></button>
-                      <button aria-pressed={source === "external"} className={source === "external" ? "active" : undefined} onClick={() => updatePolicy(policy, "external")} type="button"><Link2 size={18} /><span><strong>External</strong><small>Link to a policy on your website.</small></span></button>
+                      <button aria-pressed={source === "hosted"} className={source === "hosted" ? "active" : undefined} onClick={() => updatePolicy(policy, "hosted")} type="button"><span><strong>Host in OrbitPage</strong><small>Write or paste the policy text.</small></span></button>
+                      <button aria-pressed={source === "external"} className={source === "external" ? "active" : undefined} onClick={() => updatePolicy(policy, "external")} type="button"><span><strong>External</strong><small>Link to a policy on your website.</small></span></button>
                     </div>
                     {source === "hosted"
                       ? <label><span>Text hosted in this Shop</span><textarea maxLength={6000} onChange={(event) => updatePolicy(policy, "hosted", event.target.value)} rows={5} value={appearance[policy.textField]} /></label>
@@ -1640,7 +1632,7 @@ export default function ShopClient({
             <label><span>Seller notice — optional addition</span><textarea maxLength={500} onChange={event => setAppearance(current => current ? { ...current, sellerNoticeAddon: event.target.value } : current)} rows={3} value={appearance.sellerNoticeAddon || ""} /><small>Additional information shown with the seller-status acknowledgement. Do not suggest that mandatory customer rights are waived.</small></label>
             <label><span>Digital delivery consent — optional addition</span><textarea maxLength={500} onChange={event => setAppearance(current => current ? { ...current, digitalContentConsentAddon: event.target.value } : current)} rows={3} value={appearance.digitalContentConsentAddon || ""} /><small>Appended to the explicit consent shown for digital products only.</small></label>
           </section>
-          <div className="shop-checkout-fields-heading"><div><h4>Additional fields</h4><p className="shop-provider-muted">Up to three text or number fields on the product before checkout, carried into Stripe for confirmation. Keep sensitive information out.</p></div><button className="button secondary shop-checkout-add" disabled={appearance.checkout.customFields.length >= 3} onClick={() => updateCheckout({ customFields: [...appearance.checkout.customFields, { key: crypto.randomUUID().replaceAll("-", ""), label: "", type: "text", required: false }] })} type="button"><PackagePlus size={16} /> Add field</button></div>
+          <div className="shop-checkout-fields-heading"><div><h4>Additional fields</h4><p className="shop-provider-muted">Up to three text or number fields on the product before checkout, carried into Stripe for confirmation. Keep sensitive information out.</p></div><button className="button secondary shop-checkout-add" disabled={appearance.checkout.customFields.length >= 3} onClick={() => updateCheckout({ customFields: [...appearance.checkout.customFields, { key: crypto.randomUUID().replaceAll("-", ""), label: "", type: "text", required: false }] })} type="button"> Add field</button></div>
           {appearance.checkout.customFields.length === 0 && <p className="shop-checkout-fields-empty">No additional fields. Customers see only the checkout details selected above.</p>}
           {appearance.checkout.customFields.map((field, index) => <div className="shop-option-grid shop-checkout-custom-field" key={field.key}>
             <label>Field {index + 1} label<input maxLength={50} onChange={event => updateCheckout({ customFields: appearance.checkout.customFields.map(item => item.key === field.key ? { ...item, label: event.target.value } : item) })} placeholder="e.g. Project reference" required value={field.label} /></label>
@@ -1649,7 +1641,7 @@ export default function ShopClient({
             <button aria-label={`Remove field ${index + 1}`} className="shop-delete-button" onClick={() => updateCheckout({ customFields: appearance.checkout.customFields.filter(item => item.key !== field.key) })} type="button"><Trash2 size={17} /></button>
           </div>)}
           <section className="shop-checkout-notices">
-            <div className="shop-checkout-fields-heading"><div><h4>Before checkout</h4><p className="shop-provider-muted">Add up to five unchecked acceptance boxes to the product. Required boxes must be accepted before continuing to Stripe.</p></div><button className="button secondary shop-checkout-add" disabled={appearance.checkoutAcknowledgements.length >= 5} onClick={() => setAppearance(current => current ? { ...current, checkoutAcknowledgements: [...current.checkoutAcknowledgements, { id: crypto.randomUUID(), label: "", required: true, appliesTo: "all" }] } : current)} type="button"><PackagePlus size={16} /> Add acceptance</button></div>
+            <div className="shop-checkout-fields-heading"><div><h4>Before checkout</h4><p className="shop-provider-muted">Add up to five unchecked acceptance boxes to the product. Required boxes must be accepted before continuing to Stripe.</p></div><button className="button secondary shop-checkout-add" disabled={appearance.checkoutAcknowledgements.length >= 5} onClick={() => setAppearance(current => current ? { ...current, checkoutAcknowledgements: [...current.checkoutAcknowledgements, { id: crypto.randomUUID(), label: "", required: true, appliesTo: "all" }] } : current)} type="button"> Add acceptance</button></div>
             {appearance.checkoutAcknowledgements.map((item, index) => <div className="shop-option-grid shop-checkout-custom-field" key={item.id}>
               <label>Acceptance {index + 1} text<textarea maxLength={500} onChange={event => setAppearance(current => current ? { ...current, checkoutAcknowledgements: current.checkoutAcknowledgements.map(value => value.id === item.id ? { ...value, label: event.target.value } : value) } : current)} required rows={3} value={item.label} /></label>
               <label>Acceptance {index + 1} products<select onChange={event => setAppearance(current => current ? { ...current, checkoutAcknowledgements: current.checkoutAcknowledgements.map(value => value.id === item.id ? { ...value, appliesTo: event.target.value as "all" | "digital" | "service" } : value) } : current)} value={item.appliesTo}><option value="all">All products</option><option value="digital">Digital products</option><option value="service">Services</option></select></label>
@@ -1681,7 +1673,7 @@ export default function ShopClient({
               <label>Reply-to email (optional)<input autoCapitalize="none" maxLength={254} onChange={event => setSmtpDraft(current => current ? { ...current, replyTo: event.target.value } : current)} type="email" value={smtpDraft.replyTo} /></label>
             </div>
             <p className="shop-provider-muted">Use a sender address allowed by your SMTP provider. TLS is required. Save changes before testing.</p>
-            <div className="shop-connect-actions"><button className="button secondary compact" disabled={emailChanged || data.shop?.emailSettings?.mode !== "custom" || !data.shop.emailSettings.passwordConfigured} onClick={() => void testEmail()} type="button">{action === "test-email" ? <LoadingIndicator size={15} /> : <Mail size={15} />} Send test email</button><span className="shop-provider-muted">{emailChanged ? "Unsaved settings" : data.shop?.emailSettings?.verifiedAt ? "Test sent successfully" : "Not tested yet"}</span></div>
+            <div className="shop-connect-actions"><button className="button secondary compact" disabled={emailChanged || data.shop?.emailSettings?.mode !== "custom" || !data.shop.emailSettings.passwordConfigured} onClick={() => void testEmail()} type="button">{action === "test-email" ? <LoadingIndicator size={15} /> : null} Send test email</button><span className="shop-provider-muted">{emailChanged ? "Unsaved settings" : data.shop?.emailSettings?.verifiedAt ? "Test sent successfully" : "Not tested yet"}</span></div>
             <p className="shop-provider-muted">The test is sent to your account email. Customer replies go to the seller, and seller notifications reply to the customer.</p>
           </>}
         </fieldset>
@@ -1700,13 +1692,13 @@ export default function ShopClient({
               <p>Save the contacts you want customers to see in <strong>Shop settings → Compliance</strong>. OrbitPage only shows the public phone you enter there.</p>
               {!selfHosted && <p>For a new Stripe account, saved public email and phone are prefilled. During onboarding, review any details Stripe proposes from an existing account before confirming.</p>}
               <p>In Stripe's public details, turn off “Show phone number on receipts and invoices” if you do not want it displayed. Stripe controls this setting separately. An account shared with other shops or apps uses the same Stripe public details.</p>
-              <a className="shop-provider-docs" href={stripePublicDetailsUrl} rel="noreferrer" target="_blank"><ArrowUpRight aria-hidden="true" size={14} /> Review public details in Stripe</a>
+              <a className="shop-provider-docs" href={stripePublicDetailsUrl} rel="noreferrer" target="_blank"> Review public details in Stripe</a>
             </div>
             {appearance && <label className="shop-setting-toggle compact"><ToggleSwitch aria-label="Show Secure payments with Stripe in footer" checked={appearance.showStripePaymentNoticeInFooter !== false} disabled={action !== null} onCheckedChange={(checked) => setAppearance((current) => current ? { ...current, showStripePaymentNoticeInFooter: checked } : current)} /><span><strong>Secure payments with Stripe</strong><small>Show this notice in the Shop footer.</small></span></label>}
             {(!selfHosted || (data.shop?.stripeConnected && !shopReady)) && <div className="shop-connect-actions">
-              {!selfHosted && data.shop?.stripeConnected && <a className="button secondary" href={stripeDashboardUrl} rel="noreferrer" target="_blank"><ArrowUpRight size={16} /> Stripe Dashboard</a>}
-              {data.shop?.stripeConnected && !shopReady && <button className="button secondary" disabled={action !== null} onClick={() => void refreshStripeConnection()} type="button">{action === "refresh-status" ? <LoadingIndicator size={16} /> : <RefreshCw size={16} />} Check status</button>}
-              {!selfHosted && <button className="button primary" disabled={action !== null || data.mode !== "stripe"} onClick={() => void connectStripe()} type="button">{action === "connect" ? <LoadingIndicator size={16} /> : <ArrowUpRight size={16} />}{data.shop?.stripeConnected ? "Update Stripe details" : "Connect Stripe"}</button>}
+              {!selfHosted && data.shop?.stripeConnected && <a className="button secondary" href={stripeDashboardUrl} rel="noreferrer" target="_blank"> Stripe Dashboard</a>}
+              {data.shop?.stripeConnected && !shopReady && <button className="button secondary" disabled={action !== null} onClick={() => void refreshStripeConnection()} type="button">{action === "refresh-status" ? <LoadingIndicator size={16} /> : null} Check status</button>}
+              {!selfHosted && <button className="button primary" disabled={action !== null || data.mode !== "stripe"} onClick={() => void connectStripe()} type="button">{action === "connect" ? <LoadingIndicator size={16} /> : null}{data.shop?.stripeConnected ? "Update Stripe details" : "Connect Stripe"}</button>}
             </div>}
             {selfHosted && <OwnerStripeSettings dashboardUrl={stripeDashboardUrl} livemode={data.shop?.stripeLivemode ?? null} onSaved={next => { setStripeCheckFailed(false); setData(next); }} request={request} saved={data.shop?.stripeSettings} />}
             {data.mode !== "stripe" && <p className="shop-feedback error">Shop is not configured on this OrbitPage deployment yet.</p>}
@@ -1719,9 +1711,9 @@ export default function ShopClient({
               <a className="shop-provider-docs" href={documentationUrl("calendar")} rel="noreferrer" target="_blank"><HelpCircle aria-hidden="true" size={14} /> Calendar documentation</a>
             </header>
             {calCom ? <div className="shop-calendar-integration">
-              <div><div className="shop-calendar-heading"><strong>Cal.com webhook settings</strong><a className="button secondary compact" href="https://app.cal.com/settings/developer/webhooks" rel="noreferrer" target="_blank"><ArrowUpRight size={13} /> Open Cal.com webhooks</a></div><p>Add one webhook in Cal.com using these private values. No Cal.com API key is required.</p></div>
-              <div className="shop-calendar-field"><label htmlFor="shop-calendar-webhook-url">Subscriber URL</label><div><input id="shop-calendar-webhook-url" onFocus={(event) => event.currentTarget.select()} readOnly value={calCom.webhookUrl} /><button className="button secondary compact" onClick={() => void copyCalendarValue("url", calCom.webhookUrl)} type="button">{copiedCalendarField === "url" ? <CheckCircle2 size={15} /> : <Copy size={15} />}{copiedCalendarField === "url" ? "Copied" : "Copy URL"}</button></div></div>
-              <div className="shop-calendar-field"><label htmlFor="shop-calendar-signing-secret">Signing secret</label><div><input id="shop-calendar-signing-secret" onFocus={(event) => event.currentTarget.select()} readOnly type="password" value={calCom.signingSecret} /><button className="button secondary compact" onClick={() => void copyCalendarValue("secret", calCom.signingSecret)} type="button">{copiedCalendarField === "secret" ? <CheckCircle2 size={15} /> : <Copy size={15} />}{copiedCalendarField === "secret" ? "Copied" : "Copy secret"}</button></div></div>
+              <div><div className="shop-calendar-heading"><strong>Cal.com webhook settings</strong><a className="button secondary compact" href="https://app.cal.com/settings/developer/webhooks" rel="noreferrer" target="_blank"> Open Cal.com webhooks</a></div><p>Add one webhook in Cal.com using these private values. No Cal.com API key is required.</p></div>
+              <div className="shop-calendar-field"><label htmlFor="shop-calendar-webhook-url">Subscriber URL</label><div><input id="shop-calendar-webhook-url" onFocus={(event) => event.currentTarget.select()} readOnly value={calCom.webhookUrl} /><button className="button secondary compact" onClick={() => void copyCalendarValue("url", calCom.webhookUrl)} type="button">{copiedCalendarField === "url" ? "Copied" : "Copy URL"}</button></div></div>
+              <div className="shop-calendar-field"><label htmlFor="shop-calendar-signing-secret">Signing secret</label><div><input id="shop-calendar-signing-secret" onFocus={(event) => event.currentTarget.select()} readOnly type="password" value={calCom.signingSecret} /><button className="button secondary compact" onClick={() => void copyCalendarValue("secret", calCom.signingSecret)} type="button">{copiedCalendarField === "secret" ? "Copied" : "Copy secret"}</button></div></div>
               <div className="shop-calendar-events"><strong>Event triggers</strong><ul>{calCom.events.map((event) => <li key={event}><code>{event}</code></li>)}</ul></div>
               {calendarCopyError && <small role="alert">{calendarCopyError}</small>}
               <small>Keep the signing secret private. Booking status changes appear in Orders only after Cal.com sends a matching signed event.</small>
@@ -1742,7 +1734,7 @@ export default function ShopClient({
             <label>To date<input min={orderFilters.from || undefined} onChange={event => setOrderFilters(current => ({ ...current, to: event.target.value }))} type="date" value={orderFilters.to} /></label>
           </div>
           {orderFilters.customer && <div className="shop-sales-customer-filter"><span>Customer: {orderFilters.customer}</span><button aria-label="Clear customer filter" className="shop-catalog-edit" onClick={() => setOrderFilters(current => ({ ...current, customer: "", query: current.query === current.customer ? "" : current.query }))} type="button"><X size={14} /></button></div>}
-          <div className="shop-catalog-summary"><span role="status">{orderRows.length} of {data.orders.length} orders</span><button disabled={!orderFilters.query && !orderFilters.customer && orderFilters.status === "all" && orderFilters.type === "all" && !orderFilters.from && !orderFilters.to && orderSort.column === "date" && orderSort.descending} onClick={resetOrderFilters} type="button"><RotateCcw size={14} /> Reset filters</button></div>
+          <div className="shop-catalog-summary"><span role="status">{orderRows.length} of {data.orders.length} orders</span><button disabled={!orderFilters.query && !orderFilters.customer && orderFilters.status === "all" && orderFilters.type === "all" && !orderFilters.from && !orderFilters.to && orderSort.column === "date" && orderSort.descending} onClick={resetOrderFilters} type="button"> Reset filters</button></div>
           <div aria-label="Orders table" className="shop-catalog-grid shop-sales-grid" role="region" tabIndex={0}>
             <table aria-label="Orders" className="shop-catalog-table shop-sales-table shop-orders-table">
               <thead><tr>
@@ -1764,7 +1756,7 @@ export default function ShopClient({
                 <td className="shop-catalog-price">{money(order.amountRefunded || 0, locale, order.currency)}</td>
                 {hasLegacyFees && <td className="shop-catalog-price">{money(order.applicationFeeAmount, locale, order.currency)}{!!order.applicationFeeRefunded && <small>{money(order.applicationFeeRefunded, locale, order.currency)} refunded</small>}</td>}
                 <td>{order.productType === "service" ? <><span className="shop-sales-booking-status">{(order.bookingStatus || "awaiting_booking").replaceAll("_", " ")}</span><small>{order.sessionsRemaining} / {order.sessionsIncluded} sessions remaining</small>{order.scheduledStartAt && <small>{shopDate(order.scheduledStartAt, locale)}</small>}</> : `${order.downloadCount} ${order.downloadCount === 1 ? "download" : "downloads"}`}</td>
-                <td><button aria-label={`View order ${shopOrderLabel(order)}`} className="shop-catalog-edit" onClick={() => setSelectedOrder(order)} type="button">View<ArrowUpRight size={14} /></button>{order.intakeSubmittedAt && <small>Questionnaire received</small>}</td>
+                <td><button aria-label={`View order ${shopOrderLabel(order)}`} className="shop-catalog-edit" onClick={() => setSelectedOrder(order)} type="button">View</button>{order.intakeSubmittedAt && <small>Questionnaire received</small>}</td>
               </tr>)}</tbody>
             </table>
             {!orderRows.length && <div className="shop-catalog-empty"><Search size={24} /><strong>No orders match these filters.</strong><span>Try another search or reset the filters.</span></div>}
@@ -1783,7 +1775,7 @@ export default function ShopClient({
             <label>Last purchase from<input max={customerFilters.to || undefined} onChange={event => setCustomerFilters(current => ({ ...current, from: event.target.value }))} type="date" value={customerFilters.from} /></label>
             <label>Last purchase to<input min={customerFilters.from || undefined} onChange={event => setCustomerFilters(current => ({ ...current, to: event.target.value }))} type="date" value={customerFilters.to} /></label>
           </div>
-          <div className="shop-catalog-summary"><span role="status">{customerRows.length} of {data.customers.length} customers</span><button disabled={!customerFilters.query && customerFilters.purchases === "all" && !customerFilters.from && !customerFilters.to && customerSort.column === "date" && customerSort.descending} onClick={resetCustomerFilters} type="button"><RotateCcw size={14} /> Reset filters</button></div>
+          <div className="shop-catalog-summary"><span role="status">{customerRows.length} of {data.customers.length} customers</span><button disabled={!customerFilters.query && customerFilters.purchases === "all" && !customerFilters.from && !customerFilters.to && customerSort.column === "date" && customerSort.descending} onClick={resetCustomerFilters} type="button"> Reset filters</button></div>
           <div aria-label="Customers table" className="shop-catalog-grid shop-sales-grid" role="region" tabIndex={0}>
             <table aria-label="Customers" className="shop-catalog-table shop-sales-table shop-customers-table">
               <thead><tr><ShopSortHeader column="email" label="Email" onSort={sortCustomers} sort={customerSort} /><th scope="col">Customer ID</th><ShopSortHeader column="purchases" label="Purchases" numeric onSort={sortCustomers} sort={customerSort} /><ShopSortHeader column="date" label="Last purchase" onSort={sortCustomers} sort={customerSort} /><th scope="col">Actions</th></tr></thead>
@@ -1792,7 +1784,7 @@ export default function ShopClient({
                 <td><code title={customer.customerId}>{customer.customerId.slice(0, 12)}</code></td>
                 <td className="shop-catalog-price">{customer.orderCount}</td>
                 <td><time dateTime={customer.lastPurchaseAt}>{shopDate(customer.lastPurchaseAt, locale)}</time></td>
-                <td><div className="shop-sales-actions"><button aria-label={`View orders for ${customer.email}`} className="shop-catalog-edit" disabled={action !== null} onClick={() => { setOrderFilters({ ...EMPTY_ORDER_FILTERS, query: customer.email, customer: customer.email }); setOrderSort({ column: "date", descending: true }); setView("orders"); }} type="button">Orders<ArrowUpRight size={14} /></button><button aria-label={`Delete customer data for ${customer.email}`} className="shop-catalog-edit shop-customer-erase" disabled={action !== null} onClick={() => void deleteCustomerData(customer)} type="button">{action === `delete-customer:${customer.customerId}` ? <LoadingIndicator size={15} /> : <Trash2 size={15} />}Delete data</button></div></td>
+                <td><div className="shop-sales-actions"><button aria-label={`View orders for ${customer.email}`} className="shop-catalog-edit" disabled={action !== null} onClick={() => { setOrderFilters({ ...EMPTY_ORDER_FILTERS, query: customer.email, customer: customer.email }); setOrderSort({ column: "date", descending: true }); setView("orders"); }} type="button">Orders</button><button aria-label={`Delete customer data for ${customer.email}`} className="shop-catalog-edit shop-customer-erase" disabled={action !== null} onClick={() => void deleteCustomerData(customer)} type="button">{action === `delete-customer:${customer.customerId}` ? <LoadingIndicator size={15} /> : null}Delete data</button></div></td>
               </tr>)}</tbody>
             </table>
             {!customerRows.length && <div className="shop-catalog-empty"><Search size={24} /><strong>No customers match these filters.</strong><span>Try another search or reset the filters.</span></div>}
@@ -1803,7 +1795,7 @@ export default function ShopClient({
 
 
       {embedded && shopActions}
-      {changed && createPortal(<div className="admin-profile-save-layer"><div aria-label="Unsaved Shop changes" className="admin-profile-save-float" role="group"><button className={SAVE_BUTTON_OUTLINE} disabled={action !== null} onClick={revertChanges} type="button"><RestartAltRounded className="h-4 w-4" style={{ fontSize: 24 }} /> Reset</button><button className={SAVE_BUTTON_PRIMARY} disabled={action !== null} onClick={() => void saveChanges()} type="button">{action !== null ? <LoadingIndicator size={16} state="composing" /> : <Save className="h-4 w-4" />} {action !== null ? "Saving" : "Save"}</button></div></div>, document.body)}
+      {changed && createPortal(<div className="admin-profile-save-layer"><div aria-label="Unsaved Shop changes" className="admin-profile-save-float" role="group"><button className={SAVE_BUTTON_OUTLINE} disabled={action !== null} onClick={revertChanges} type="button"> Reset</button><button className={SAVE_BUTTON_PRIMARY} disabled={action !== null} onClick={() => void saveChanges()} type="button">{action !== null ? <LoadingIndicator size={16} state="composing" /> : null} {action !== null ? "Saving" : "Save"}</button></div></div>, document.body)}
       {logoDialogOpen && <ShopLogoDialog onApply={(file) => { setLogoFile(file); setLogoDialogOpen(false); }} onClose={() => setLogoDialogOpen(false)} />}
       {backLinkDialogOpen && <ShopDialog dirty={backLinkDraft !== (appearance?.backLinkLabel || previewCopy.back)} onClose={() => setBackLinkDialogOpen(false)} title="Back to page"><form onSubmit={(event) => { event.preventDefault(); setAppearance((current) => current ? { ...current, backLinkLabel: backLinkDraft.trim(), backLinkDescription: "" } : current); setBackLinkDialogOpen(false); }}><label>Link text<input maxLength={70} onChange={(event) => setBackLinkDraft(event.target.value)} required value={backLinkDraft} /></label><p>The link always returns to your public page.</p><footer><button className="button secondary" onClick={() => setBackLinkDialogOpen(false)} type="button">Cancel</button><button className="button primary" type="submit">Apply</button></footer></form></ShopDialog>}
       {identityDialogOpen && appearance && previewDesign && <ShopIdentityDialog appearance={appearance} busy={action !== null} design={previewDesign} onClose={() => setIdentityDialogOpen(false)} onSave={saveIdentity} />}
@@ -1836,14 +1828,14 @@ export default function ShopClient({
           <label>Minimum price ({(data.shop?.appearance.currency || "eur").toUpperCase()})<input inputMode="decimal" min="0" onChange={(event) => setCatalogMinPrice(event.target.value)} placeholder="0.00" step="0.01" type="number" value={catalogMinPrice} /></label>
           <label>Maximum price ({(data.shop?.appearance.currency || "eur").toUpperCase()})<input inputMode="decimal" min="0" onChange={(event) => setCatalogMaxPrice(event.target.value)} placeholder="No limit" step="0.01" type="number" value={catalogMaxPrice} /></label>
         </div>
-        <div className="shop-catalog-summary"><span role="status">{catalogProducts.length} of {data.products.length} products</span><button disabled={!catalogQuery && catalogFilter === "all" && catalogType === "all" && !catalogMinPrice && !catalogMaxPrice && catalogSort === "title"} onClick={() => { setCatalogQuery(""); setCatalogFilter("all"); setCatalogType("all"); setCatalogMinPrice(""); setCatalogMaxPrice(""); setCatalogSort("title"); }} type="button"><RotateCcw size={14} /> Reset filters</button></div>
+        <div className="shop-catalog-summary"><span role="status">{catalogProducts.length} of {data.products.length} products</span><button disabled={!catalogQuery && catalogFilter === "all" && catalogType === "all" && !catalogMinPrice && !catalogMaxPrice && catalogSort === "title"} onClick={() => { setCatalogQuery(""); setCatalogFilter("all"); setCatalogType("all"); setCatalogMinPrice(""); setCatalogMaxPrice(""); setCatalogSort("title"); }} type="button"> Reset filters</button></div>
         <div aria-label="Product catalog table" className="shop-catalog-grid" role="region" tabIndex={0}>
           <table aria-label="Products" className="shop-catalog-table">
             <thead><tr>
               <th scope="col">#</th>
-              <th aria-sort={catalogSort === "title" ? "ascending" : catalogSort === "title-desc" ? "descending" : "none"} scope="col"><button aria-label="Sort by product" onClick={() => setCatalogSort(catalogSort === "title" ? "title-desc" : "title")} type="button">Product{catalogSort === "title" ? <ArrowUp size={14} /> : catalogSort === "title-desc" ? <ArrowDown size={14} /> : <ArrowUpDown size={14} />}</button></th>
+              <th aria-sort={catalogSort === "title" ? "ascending" : catalogSort === "title-desc" ? "descending" : "none"} scope="col"><button aria-label="Sort by product" onClick={() => setCatalogSort(catalogSort === "title" ? "title-desc" : "title")} type="button">Product</button></th>
               <th scope="col">Type</th><th scope="col">Visibility</th>
-              <th aria-sort={catalogSort === "price-asc" ? "ascending" : catalogSort === "price-desc" ? "descending" : "none"} className="shop-catalog-price" scope="col"><button aria-label="Sort by price" onClick={() => setCatalogSort(catalogSort === "price-asc" ? "price-desc" : "price-asc")} type="button">Price{catalogSort === "price-asc" ? <ArrowUp size={14} /> : catalogSort === "price-desc" ? <ArrowDown size={14} /> : <ArrowUpDown size={14} />}</button></th>
+              <th aria-sort={catalogSort === "price-asc" ? "ascending" : catalogSort === "price-desc" ? "descending" : "none"} className="shop-catalog-price" scope="col"><button aria-label="Sort by price" onClick={() => setCatalogSort(catalogSort === "price-asc" ? "price-desc" : "price-asc")} type="button">Price</button></th>
               <th scope="col">Files</th><th scope="col">Action</th>
             </tr></thead>
             <tbody>{catalogProducts.map((product, index) => <tr className={productEditorOpen && draft.productId === product.productId ? "is-selected" : undefined} key={product.productId}>
@@ -1853,7 +1845,7 @@ export default function ShopClient({
               <td><span className={`shop-catalog-status ${product.active ? "visible" : "hidden"}`}><span aria-hidden="true" />{product.active ? "Visible" : "Hidden"}</span></td>
               <td className="shop-catalog-price">{money(product.priceCents, locale, product.currency)}</td>
               <td>{product.type === "digital" ? product.files?.length || (product.file ? 1 : 0) : "—"}</td>
-              <td><button aria-label={`Edit ${product.title}`} className="shop-catalog-edit" disabled={action !== null} onClick={() => selectProduct(product.productId)} type="button">Edit<ArrowUpRight size={14} /></button></td>
+              <td><button aria-label={`Edit ${product.title}`} className="shop-catalog-edit" disabled={action !== null} onClick={() => selectProduct(product.productId)} type="button">Edit</button></td>
             </tr>)}</tbody>
           </table>
           {!catalogProducts.length && <div className="shop-catalog-empty"><Search size={24} /><strong>No products match these filters.</strong><span>Try another search or reset the filters.</span></div>}

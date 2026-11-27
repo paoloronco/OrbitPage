@@ -121,10 +121,10 @@ export function SelfHostedAccountActions({ canDeleteInstallation, publicPageHref
       </div>
       {status?.active ? <div className="oss-account-page-action">
         <div><strong>{publicPageHref}</strong><span>{tr('Published', 'Pubblicata')}</span></div>
-        <Button className="account-danger-action" type="button" variant="destructive" disabled={DEMO_MODE} onClick={() => { setError(''); setDialogOpen(true); }}><Trash2 className="h-4 w-4" />{tr('Remove personal page', 'Rimuovi pagina personale')}</Button>
+        <Button className="account-danger-action" type="button" variant="destructive" disabled={DEMO_MODE} onClick={() => { setError(''); setDialogOpen(true); }}>{tr('Remove personal page', 'Rimuovi pagina personale')}</Button>
       </div> : status ? <form className="oss-account-page-create" onSubmit={createPage}>
         <div><strong>{publicPageHref}</strong></div>
-        <Button type="submit" variant="gradient" disabled={busy || DEMO_MODE}><Globe2 className="h-4 w-4" />{tr('Create personal page', 'Crea pagina personale')}</Button>
+        <Button type="submit" variant="gradient" disabled={busy || DEMO_MODE}>{tr('Create personal page', 'Crea pagina personale')}</Button>
       </form> : null}
       {error && <p className="oss-account-error" role="alert">{error}</p>}
     </Card>
@@ -134,7 +134,7 @@ export function SelfHostedAccountActions({ canDeleteInstallation, publicPageHref
         <Trash2 className="h-6 w-6" aria-hidden="true" />
         <div><h2>{tr('Delete account', 'Elimina account')}</h2><p className="muted">{tr('Permanently removes administrator accounts, page data, uploads, settings, and authentication configuration.', 'Rimuove definitivamente account amministratori, dati della pagina, caricamenti, impostazioni e configurazione di autenticazione.')}</p></div>
       </div>
-      <Button className="account-danger-action" type="button" variant="destructive" disabled={DEMO_MODE || !canDeleteInstallation} onClick={() => { setAccountError(''); setAccountDialogOpen(true); }}><Trash2 className="h-4 w-4" />{tr('Delete account', 'Elimina account')}</Button>
+      <Button className="account-danger-action" type="button" variant="destructive" disabled={DEMO_MODE || !canDeleteInstallation} onClick={() => { setAccountError(''); setAccountDialogOpen(true); }}>{tr('Delete account', 'Elimina account')}</Button>
     </Card>
 
 
@@ -151,7 +151,7 @@ export function SelfHostedAccountActions({ canDeleteInstallation, publicPageHref
         </div>
         <DialogFooter className="account-delete-actions">
           <Button type="button" className="account-secondary-action" variant="outline" disabled={busy} onClick={() => setDialogOpen(false)}>{tr('Cancel', 'Annulla')}</Button>
-          <Button type="button" className="account-danger-action" variant="destructive" disabled={busy || confirmation !== expected || !currentPassword} onClick={() => void removePage()}><Trash2 className="h-4 w-4" />{busy ? tr('Removing…', 'Rimozione…') : tr('Remove page permanently', 'Rimuovi pagina definitivamente')}</Button>
+          <Button type="button" className="account-danger-action" variant="destructive" disabled={busy || confirmation !== expected || !currentPassword} onClick={() => void removePage()}>{busy ? tr('Removing…', 'Rimozione…') : tr('Remove page permanently', 'Rimuovi pagina definitivamente')}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
@@ -169,7 +169,7 @@ export function SelfHostedAccountActions({ canDeleteInstallation, publicPageHref
         </div>
         <DialogFooter className="account-delete-actions">
           <Button type="button" className="account-secondary-action" variant="outline" disabled={accountBusy} onClick={() => setAccountDialogOpen(false)}>{tr('Cancel', 'Annulla')}</Button>
-          <Button type="button" className="account-danger-action" variant="destructive" disabled={accountBusy || accountConfirmation !== expectedAccountConfirmation || !accountPassword} onClick={() => void deleteInstallation()}><Trash2 className="h-4 w-4" />{accountBusy ? tr('Deleting…', 'Eliminazione…') : tr('Delete permanently', 'Elimina definitivamente')}</Button>
+          <Button type="button" className="account-danger-action" variant="destructive" disabled={accountBusy || accountConfirmation !== expectedAccountConfirmation || !accountPassword} onClick={() => void deleteInstallation()}>{accountBusy ? tr('Deleting…', 'Eliminazione…') : tr('Delete permanently', 'Elimina definitivamente')}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

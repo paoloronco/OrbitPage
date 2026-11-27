@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
-import { ChevronDown, Edit, Trash2, Upload, Type, ExternalLink, Plus, X, Eye, EyeOff, Image, Loader2, LockKeyhole, RotateCcw } from "@/components/ui/material-icons";
+import { ChevronDown, Edit, Trash2, Upload, Type, ExternalLink, X, Eye, EyeOff, Image, Loader2, LockKeyhole } from "@/components/ui/material-icons";
 import { LinkData } from "./LinkCard";
 import { LinkEditMode } from "@/lib/permissions";
 import { isAllowedRasterImageFile, RASTER_IMAGE_ACCEPT } from "@/lib/media-validation";
@@ -133,7 +133,7 @@ export const TextCard = ({ link, onUpdate, onPreview, onPreparingChange, onDelet
   const updateTextItem = (index: number, field: 'text' | 'url', value: string) => {
     setEditLink(prev => ({
       ...prev,
-      textItems: prev.textItems?.map((item, i) => 
+      textItems: prev.textItems?.map((item, i) =>
         i === index ? { ...item, [field]: value } : item
       ) || []
     }));
@@ -339,7 +339,7 @@ export const TextCard = ({ link, onUpdate, onPreview, onPreparingChange, onDelet
                   size="sm"
                   onClick={addTextItem}
                 >
-                  <Plus className="w-3 h-3 mr-1" />
+
                   Add Item
                 </Button>
               </div>
@@ -428,7 +428,7 @@ export const TextCard = ({ link, onUpdate, onPreview, onPreparingChange, onDelet
                 </div>
               ))}
             </div>
-            
+
             {/* Removed large free-text editor to keep UI compact; use clickable list items instead */}
             {!isListCard && (
               <Input
@@ -651,7 +651,7 @@ export const TextCard = ({ link, onUpdate, onPreview, onPreparingChange, onDelet
               <Label htmlFor={`text-card-size-${link.id}`} className="text-sm font-medium">Size</Label>
               <Select
                 value={editLink.size || 'medium'}
-                onValueChange={(value: 'small' | 'medium' | 'large') => 
+                onValueChange={(value: 'small' | 'medium' | 'large') =>
                   setEditLink(prev => ({ ...prev, size: value }))
                 }
               >
@@ -700,7 +700,7 @@ export const TextCard = ({ link, onUpdate, onPreview, onPreparingChange, onDelet
                 onClick={() => setEditLink(prev => ({ ...prev, backgroundColor: undefined, textColor: undefined }))}
                 title="Use theme colors"
               >
-                <RotateCcw className="h-3.5 w-3.5" />
+
                 Use theme colors
               </Button>
             )}
@@ -776,7 +776,7 @@ export const TextCard = ({ link, onUpdate, onPreview, onPreparingChange, onDelet
               )}
               {/* Note: long free-text content rendering removed to improve layout */}
             </div>
-            
+
             {canEdit && (
             <div className="admin-card-controls flex gap-1 opacity-0 group-hover:opacity-100 transition-smooth" onClick={(e) => e.stopPropagation()}>
               {isFullEdit && onMoveUp && (

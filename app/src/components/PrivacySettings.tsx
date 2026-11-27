@@ -26,11 +26,9 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { OrbitLoader, OrbitLoadingState } from '@/components/ui/orbit-loader';
 import {
-  ArrowRight,
   CheckCircle2,
   ClipboardCheck,
   Cookie,
-  ExternalLink,
   FileText,
   Files,
   Globe2,
@@ -38,7 +36,6 @@ import {
   LayoutTemplate,
   ListChecks,
   Link2,
-  Save,
   ShieldCheck,
   Sliders,
   Type,
@@ -150,7 +147,6 @@ function StatusBadge({ configured }: { configured: boolean }) {
 
 function MethodButton({
   active,
-  icon: Icon,
   title,
   description,
   onClick,
@@ -170,7 +166,7 @@ function MethodButton({
       }`}
     >
       <div className="flex items-start gap-2.5">
-        <Icon className={`mt-0.5 h-4 w-4 shrink-0 ${active ? 'text-blue-600' : 'text-slate-500'}`} />
+
         <div>
           <p className={`text-sm font-semibold ${active ? 'text-blue-800' : 'text-slate-800'}`}>{title}</p>
           <p className="mt-0.5 text-xs leading-5 text-slate-500">{description}</p>
@@ -298,7 +294,7 @@ function PolicyConfigurator({
           </FieldRow>
           <a className="inline-flex items-center gap-1.5 text-xs font-semibold text-blue-700 underline" href={withBasePath(hostedPath)} target="_blank" rel="noopener noreferrer">
             {tr("Preview", "Anteprima")} {hostedPath}
-            <ExternalLink className="h-3 w-3" />
+
           </a>
         </div>
       )}
@@ -723,7 +719,6 @@ function ModeCard({
   active,
   title,
   description,
-  icon: Icon,
   badge,
   onClick,
 }: {
@@ -747,13 +742,7 @@ function ModeCard({
       }`}
     >
       <div className="flex items-start gap-3">
-        <span
-          className={`mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${
-            isSelected ? 'bg-blue-100 text-blue-600' : 'bg-slate-100 text-slate-500'
-          }`}
-        >
-          <Icon className="h-4 w-4" />
-        </span>
+
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
             <span className={`text-sm font-semibold ${isSelected ? 'text-blue-700' : 'text-slate-800'}`}>
@@ -765,7 +754,7 @@ function ModeCard({
               </span>
             )}
             {isSelected && (
-              <CheckCircle2 className="ml-auto h-4 w-4 shrink-0 text-blue-500" />
+              null
             )}
           </div>
           <p className="mt-0.5 text-xs leading-5 text-slate-500">{description}</p>
@@ -1242,7 +1231,7 @@ export function PrivacySettings({
               {!legalReady && <span>{tr('Complete both documents before publishing.', 'Completa entrambi i documenti prima di pubblicare.')}</span>}
               <Button onClick={() => setActiveSection('consent')} type="button" variant="outline">
                 {tr('Continue to consent', 'Continua al consenso')}
-                <ArrowRight className="h-4 w-4" />
+
               </Button>
             </div>
           </section>
@@ -1340,7 +1329,7 @@ export function PrivacySettings({
               </Button>
               <Button onClick={() => setActiveSection('review')} type="button" variant="outline">
                 {tr('Review setup', 'Verifica configurazione')}
-                <ArrowRight className="h-4 w-4" />
+
               </Button>
             </div>
           </section>
@@ -1384,14 +1373,14 @@ export function PrivacySettings({
 
             <div className="privacy-review-actions">
               <button onClick={() => setActiveSection('documents')} type="button">
-                <Files />
+
                 <span><strong>{tr('Review documents', 'Rivedi documenti')}</strong><small>{legalReady ? tr('Both configured', 'Entrambi configurati') : tr('Action required', 'Azione richiesta')}</small></span>
-                <ArrowRight />
+
               </button>
               <button onClick={() => setActiveSection('consent')} type="button">
-                <Cookie />
+
                 <span><strong>{tr('Review consent', 'Rivedi consenso')}</strong><small>{consentReady ? tr('Active and ready', 'Attivo e pronto') : tr('Action required', 'Azione richiesta')}</small></span>
-                <ArrowRight />
+
               </button>
             </div>
           </section>
@@ -1403,7 +1392,7 @@ export function PrivacySettings({
           <div className="admin-profile-save-float admin-profile-save-float--single">
             {saveError && <span className="max-w-72 text-xs text-red-700" role="alert">{saveError}</span>}
             <Button type="button" size="sm" onClick={handleSave} disabled={saving || readOnly}>
-              {saving ? <OrbitLoader size={16} state="composing" /> : <Save className="h-4 w-4" />}
+              {saving ? <OrbitLoader size={16} state="composing" /> : null}
               {saving ? tr('Saving', 'Salvataggio') : tr('Save', 'Salva')}
             </Button>
           </div>

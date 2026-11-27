@@ -34,6 +34,7 @@ Check the stylesheet before changing a value.
 
 | Pattern | Rule |
 | --- | --- |
+| Action buttons | Use clear text labels without decorative icons or arrows, including links styled as buttons. Retain functional symbols for icon-only controls, navigation, sorting and loading states. Preserve creator-selected icons and visual previews. |
 | Navigation and tabs | Mark the active item and keep the selected subsection in the dashboard URL. Both sidebar groups use 40px rows, a fixed 20px icon column, a 12px icon/text gap and centered 20px text lines. Translate navigation, tabs and accessible names through `useAppI18n`; keep user-authored content unchanged. The sidebar logo and slug link to the current public page in a new tab; do not repeat that action in section toolbars. Keep the site-section strip at a consistent height when section controls appear or disappear. |
 | Form fields | Use existing primitives and visible labels; attach validation to the relevant control. |
 | Save | Show unsaved state and save results. Self-hosted public content becomes visible when saved; additional pages also have a publication state. |

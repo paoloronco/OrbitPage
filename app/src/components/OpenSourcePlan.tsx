@@ -1,4 +1,4 @@
-import { ArrowRight, ArrowUpRight, BarChart3, BookOpen, FileText, Github, Mail, PackageCheck, Puzzle, RefreshCw, Server, Users, Wrench } from "lucide-react";
+import { BarChart3, BookOpen, FileText, Github, Mail, PackageCheck, Puzzle, RefreshCw, Server, Users, Wrench } from "lucide-react";
 import { useAppI18n } from "@/lib/i18n";
 import { adminSubsectionPath } from "@/lib/admin-navigation";
 import { publicLocaleSlug } from "@/lib/public-routing";
@@ -28,8 +28,8 @@ export function OpenSourcePlan({ version, canManageInstance, onInstallUpdate }: 
       <section className="oss-plan-intro" aria-labelledby="oss-plan-title">
         <h2 id="oss-plan-title">OrbitPage Open Source</h2>
         <div className="oss-plan-resources">
-          <a className="oss-plan-resource-link" href={repositoryUrl} target="_blank" rel="noopener noreferrer"><Github aria-hidden="true" size={17} />{tr("Source code", "Codice sorgente")}<ArrowUpRight aria-hidden="true" size={14} /></a>
-          <a className="oss-plan-resource-link" href={`${repositoryUrl}/blob/main/docs/wiki/administration/Deployment.md`} target="_blank" rel="noopener noreferrer"><BookOpen aria-hidden="true" size={17} />{tr("Deployment guide", "Guida all'installazione")}<ArrowUpRight aria-hidden="true" size={14} /></a>
+          <a className="oss-plan-resource-link" href={repositoryUrl} target="_blank" rel="noopener noreferrer"><Github aria-hidden="true" size={17} />{tr("Source code", "Codice sorgente")}</a>
+          <a className="oss-plan-resource-link" href={`${repositoryUrl}/blob/main/docs/wiki/administration/Deployment.md`} target="_blank" rel="noopener noreferrer"><BookOpen aria-hidden="true" size={17} />{tr("Deployment guide", "Guida all'installazione")}</a>
         </div>
       </section>
 
@@ -57,7 +57,7 @@ export function OpenSourcePlan({ version, canManageInstance, onInstallUpdate }: 
                 {responsibilities.map(({ icon: Icon, title, detail }) => <li key={title}><span className="oss-plan-item-icon" aria-hidden="true"><Icon size={18} /></span><span><strong>{title}</strong><small>{detail}</small></span></li>)}
               </ul>
               <div className="oss-plan-links">
-                <a className="oss-plan-primary-link" href={withBasePath(adminSubsectionPath("account", "general", locale))}>{tr("Open account settings", "Apri le impostazioni account")}<ArrowRight aria-hidden="true" size={16} /></a>
+                <a className="oss-plan-primary-link" href={withBasePath(adminSubsectionPath("account", "general", locale))}>{tr("Open account settings", "Apri le impostazioni account")}</a>
               </div>
             </div>
           </section>
@@ -65,7 +65,7 @@ export function OpenSourcePlan({ version, canManageInstance, onInstallUpdate }: 
           <aside className="oss-plan-managed-promo" aria-labelledby="oss-plan-managed-title">
             <div><span>{tr("Managed", "Gestito")}</span><h3 id="oss-plan-managed-title">OrbitPage SaaS</h3></div>
             <p>{tr("Want hosting and updates handled for you?", "Preferisci che hosting e aggiornamenti siano gestiti per te?")}</p>
-            <a className="oss-plan-managed-link" href={`https://orbitpage.com/${publicLocaleSlug(locale)}/pricing`} target="_blank" rel="noopener noreferrer">{tr("See OrbitPage SaaS", "Scopri OrbitPage SaaS")}<ArrowUpRight aria-hidden="true" size={15} /></a>
+            <a className="oss-plan-managed-link" href={`https://orbitpage.com/${publicLocaleSlug(locale)}/pricing`} target="_blank" rel="noopener noreferrer">{tr("See OrbitPage SaaS", "Scopri OrbitPage SaaS")}</a>
           </aside>
         </div>
       </div>

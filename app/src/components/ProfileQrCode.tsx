@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import QRCode from "qrcode";
-import { ChevronDown, Download, ExternalLink, QrCode, SlidersHorizontal } from "lucide-react";
+import { ChevronDown, QrCode, SlidersHorizontal } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -195,7 +195,7 @@ export function ProfileQrCode({ menu = createDefaultMenu(), subpages = [], readO
         </div>
         {qrTarget.url && !error && (
           <Button asChild variant="outline" className="admin-action">
-            <a href={qrTarget.url} target="_blank" rel="noopener noreferrer"><ExternalLink className="h-4 w-4" />{tr("Test target", "Prova destinazione")}</a>
+            <a href={qrTarget.url} target="_blank" rel="noopener noreferrer">{tr("Test target", "Prova destinazione")}</a>
           </Button>
         )}
       </div>
@@ -304,8 +304,8 @@ export function ProfileQrCode({ menu = createDefaultMenu(), subpages = [], readO
 
           {error && <p className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-xs font-medium leading-5 text-red-700">{error}</p>}
           <div className="flex flex-wrap gap-2 border-t border-slate-200 pt-4">
-            <Button type="button" onClick={downloadPng} disabled={!qrTarget.url || Boolean(error)}><Download className="h-4 w-4" />PNG</Button>
-            <Button type="button" onClick={() => { void downloadSvg(); }} variant="outline" disabled={!qrTarget.url || Boolean(error)}><Download className="h-4 w-4" />SVG</Button>
+            <Button type="button" onClick={downloadPng} disabled={!qrTarget.url || Boolean(error)}>PNG</Button>
+            <Button type="button" onClick={() => { void downloadSvg(); }} variant="outline" disabled={!qrTarget.url || Boolean(error)}>SVG</Button>
           </div>
         </div>
       </div>

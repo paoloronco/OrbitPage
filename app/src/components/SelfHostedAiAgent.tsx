@@ -3,7 +3,7 @@ import { useAiConversationScroll } from "@/lib/use-ai-conversation-scroll";
 import { keepMobileInputVisible } from '@/lib/mobile-keyboard-focus';
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { Check, Send, ShieldCheck, Bot, Trash2, X } from "@/components/ui/material-icons";
+import { Send, ShieldCheck, Bot, Trash2, X } from "@/components/ui/material-icons";
 import {
   aiPageAgentApi,
   type AiConversationMessage,
@@ -182,8 +182,8 @@ export function SelfHostedAiAgent({ historyKey = "admin", onApplied }: { history
                         {item.applying
                           ? <><OrbitLoader size={16} state="weaving" />{labels.applying}</>
                           : item.applied
-                            ? <><Check aria-hidden="true" size={16} />{labels.applied}</>
-                            : <><Check aria-hidden="true" size={16} />{labels.apply}</>}
+                            ? <>{labels.applied}</>
+                            : <>{labels.apply}</>}
                       </button>
                       <button disabled={item.applying} onClick={() => setMessages(current => current.map(message => message.id === item.id ? { ...message, proposal: null } : message))} type="button">{tr("Discard", "Scarta")}</button>
                     </div>
@@ -221,7 +221,7 @@ export function SelfHostedAiAgent({ historyKey = "admin", onApplied }: { history
     <div className={`ai-page-agent${open ? " is-open" : ""}`}>
       {panel}
       <button ref={launcherRef} aria-expanded={open} aria-label={labels.launch} className="ai-page-agent-launcher" onClick={() => setOpen((current) => !current)} type="button">
-        <Bot aria-hidden="true" size={19} /><span>{labels.launch}</span>
+        <span>{labels.launch}</span>
       </button>
     </div>
   );

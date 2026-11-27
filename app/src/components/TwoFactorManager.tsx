@@ -1,7 +1,7 @@
 import { useAppI18n } from "@/lib/i18n";
 import { useEffect, useState } from 'react';
 import QRCode from 'qrcode';
-import { Check, Copy, KeyRound, QrCode, RefreshCw, ShieldCheck, ShieldOff } from 'lucide-react';
+import { KeyRound, ShieldCheck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -74,7 +74,7 @@ export function TwoFactorManager({ username = "admin" }: { username?: string }) 
       <p className="muted">{tr("Enter your current password before changing two-factor authentication.", "Inserisci la password attuale prima di modificare l’autenticazione a due fattori.")}</p>
       <div className="field"><Label htmlFor="two-factor-password">{tr("Current password", "Password attuale")}</Label><Input id="two-factor-password" type="password" autoComplete="current-password" value={currentPassword} onChange={(event) => setCurrentPassword(event.target.value)} /></div>
       {status?.enabled && <><Label htmlFor="two-factor-manage-code">Authentication or recovery code</Label><Input id="two-factor-manage-code" autoComplete="one-time-code" value={code} onChange={(event) => setCode(event.target.value.toUpperCase())} /></>}
-      {!status?.enabled ? <Button type="submit" variant="gradient" disabled={busy !== null || !currentPassword || status === null}><QrCode className="h-4 w-4" />{busy === 'setup' ? 'Preparing…' : tr("Set up authenticator", "Configura autenticatore")}</Button> : <div className="mfa-actions"><Button type="button" className="account-secondary-action" variant="outline" disabled={busy !== null || !currentPassword || !code} onClick={regenerate}><RefreshCw className="h-4 w-4" />{tr("Replace recovery codes", "Sostituisci codici di recupero")}</Button><Button type="button" className="account-secondary-action" variant="outline" disabled={busy !== null || !currentPassword || !code} onClick={disable}><ShieldOff className="h-4 w-4" />{tr("Disable 2FA", "Disattiva 2FA")}</Button></div>}
+      {!status?.enabled ? <Button type="submit" variant="gradient" disabled={busy !== null || !currentPassword || status === null}>{busy === 'setup' ? 'Preparing…' : tr("Set up authenticator", "Configura autenticatore")}</Button> : <div className="mfa-actions"><Button type="button" className="account-secondary-action" variant="outline" disabled={busy !== null || !currentPassword || !code} onClick={regenerate}>{tr("Replace recovery codes", "Sostituisci codici di recupero")}</Button><Button type="button" className="account-secondary-action" variant="outline" disabled={busy !== null || !currentPassword || !code} onClick={disable}>{tr("Disable 2FA", "Disattiva 2FA")}</Button></div>}
     </form>}
 
     {setup && <div className="mfa-setup-grid">
@@ -83,11 +83,11 @@ export function TwoFactorManager({ username = "admin" }: { username?: string }) 
         <div><strong>{tr('1. Scan the QR code', '1. Scansiona il codice QR')}</strong><p className="muted">{tr('Use Google Authenticator, 1Password, Microsoft Authenticator or another TOTP app.', 'Usa Google Authenticator, 1Password, Microsoft Authenticator o un’altra app TOTP.')}</p><p className="muted">{tr('Setup expires at', 'La configurazione scade alle')} {new Date(setup.expiresAt).toLocaleTimeString()}.</p></div>
         <details><summary>{tr('Enter the key manually', 'Inserisci la chiave manualmente')}</summary><code className="mfa-secret">{setup.secretKey}</code></details>
         <div className="field"><Label htmlFor="two-factor-confirm-code">{tr('2. Enter the 6-digit code', '2. Inserisci il codice a 6 cifre')}</Label><Input id="two-factor-confirm-code" inputMode="numeric" maxLength={6} autoComplete="one-time-code" value={code} onChange={(event) => setCode(event.target.value.replace(/\D/g, ''))} /></div>
-        <div className="mfa-actions"><Button className="account-primary-action" variant="gradient" disabled={busy !== null || code.length !== 6} onClick={confirmSetup}><Check className="h-4 w-4" />{tr('Verify and enable', 'Verifica e attiva')}</Button><Button className="account-secondary-action" variant="outline" disabled={busy !== null} onClick={() => { setSetup(null); setCode(''); }}>{tr('Cancel', 'Annulla')}</Button></div>
+        <div className="mfa-actions"><Button className="account-primary-action" variant="gradient" disabled={busy !== null || code.length !== 6} onClick={confirmSetup}>{tr('Verify and enable', 'Verifica e attiva')}</Button><Button className="account-secondary-action" variant="outline" disabled={busy !== null} onClick={() => { setSetup(null); setCode(''); }}>{tr('Cancel', 'Annulla')}</Button></div>
       </div>
     </div>}
 
-    {recoveryCodes.length > 0 && <div className="mfa-recovery-box"><div><strong>{tr('Save these one-time recovery codes', 'Salva questi codici di recupero monouso')}</strong><p>{tr('They are shown only now. Store them in a password manager.', 'Vengono mostrati solo ora. Salvali in un gestore di password.')}</p></div><div className="mfa-code-grid">{recoveryCodes.map((recoveryCode) => <code key={recoveryCode}>{recoveryCode}</code>)}</div><Button className="account-secondary-action" variant="outline" size="sm" onClick={() => void navigator.clipboard.writeText(recoveryCodes.join('\n'))}><Copy className="h-4 w-4" />{tr('Copy codes', 'Copia codici')}</Button></div>}
+    {recoveryCodes.length > 0 && <div className="mfa-recovery-box"><div><strong>{tr('Save these one-time recovery codes', 'Salva questi codici di recupero monouso')}</strong><p>{tr('They are shown only now. Store them in a password manager.', 'Vengono mostrati solo ora. Salvali in un gestore di password.')}</p></div><div className="mfa-code-grid">{recoveryCodes.map((recoveryCode) => <code key={recoveryCode}>{recoveryCode}</code>)}</div><Button className="account-secondary-action" variant="outline" size="sm" onClick={() => void navigator.clipboard.writeText(recoveryCodes.join('\n'))}>{tr('Copy codes', 'Copia codici')}</Button></div>}
     {message && <p className="text-sm text-emerald-700" role="status">{message}</p>}{error && <p className="text-sm text-destructive" role="alert">{error}</p>}
   </Card>;
 }

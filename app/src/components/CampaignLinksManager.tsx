@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Clock3, Plus, Save, Trash2 } from 'lucide-react';
+import { Clock3 } from 'lucide-react';
 import type { OrbitPageCampaignLink, OrbitPageCampaignRule } from '@orbitpage/page-schema';
 
 import { Button } from '@/components/ui/button';
@@ -148,7 +148,7 @@ export function CampaignLinksManager({
           <h3 id="campaign-links-heading" className="flex items-center gap-2 text-sm font-semibold text-slate-950"><Clock3 className="h-4 w-4 text-blue-600" />{tr('Smart QR and campaign links', 'Smart QR e link campagna')}</h3>
           <p className="mt-1 text-xs leading-5 text-slate-600">{tr('Keep one QR forever and change its destination or schedule here.', 'Mantieni lo stesso QR e cambia qui destinazione o orari.')}</p>
         </div>
-        <Button type="button" size="sm" variant="outline" onClick={addCampaign} disabled={busy || readOnly || links.length >= 20}><Plus className="h-4 w-4" />{tr('New', 'Nuovo')}</Button>
+        <Button type="button" size="sm" variant="outline" onClick={addCampaign} disabled={busy || readOnly || links.length >= 20}>{tr('New', 'Nuovo')}</Button>
       </div>
 
       {links.length > 0 && (
@@ -185,8 +185,8 @@ export function CampaignLinksManager({
           ))}
 
           <div className="flex flex-wrap gap-2">
-            <Button type="button" size="sm" onClick={() => { void save(); }} disabled={busy || readOnly || !selected.slug || !selected.label}><Save className="h-4 w-4" />{tr('Save and publish', 'Salva e pubblica')}</Button>
-            <Button type="button" size="sm" variant="outline" onClick={() => { void remove(); }} disabled={busy || readOnly}><Trash2 className="h-4 w-4" />{tr('Delete', 'Elimina')}</Button>
+            <Button type="button" size="sm" onClick={() => { void save(); }} disabled={busy || readOnly || !selected.slug || !selected.label}>{tr('Save and publish', 'Salva e pubblica')}</Button>
+            <Button type="button" size="sm" variant="outline" onClick={() => { void remove(); }} disabled={busy || readOnly}>{tr('Delete', 'Elimina')}</Button>
           </div>
         </div>
       )}

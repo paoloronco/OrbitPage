@@ -1,8 +1,6 @@
 import { useEffect, useState, type ReactNode } from "react";
 import {
   Edit,
-  Eye,
-  EyeOff,
   Files,
   GripVertical,
   Layout,
@@ -209,7 +207,7 @@ export function VisualSiteEditor({
           onClick={() => setPreviewVisible((visible) => !visible)}
           type="button"
         >
-          {previewVisible ? <EyeOff aria-hidden="true" size={17} /> : <Eye aria-hidden="true" size={17} />}
+
           <span>{previewVisible ? tr("Hide Preview", "Nascondi anteprima") : tr("Show Preview", "Mostra anteprima")}</span>
         </button>
       )}

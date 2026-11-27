@@ -128,7 +128,7 @@ export const BackgroundMediaCustomizer = ({
       <div className="space-y-2">
         <p className="text-sm font-medium">Background Type</p>
         <div className="grid grid-cols-4 gap-2" role="group" aria-label="Background type">
-          {TYPE_OPTIONS.map(({ type, label, icon: Icon, description }) => (
+          {TYPE_OPTIONS.map(({ type, label, description }) => (
             <button
               key={type}
               type="button"
@@ -144,7 +144,7 @@ export const BackgroundMediaCustomizer = ({
                 type === "video" && !videoUploadsEnabled ? "cursor-not-allowed opacity-45" : "",
               ].join(" ")}
             >
-              <Icon className="h-5 w-5" />
+
               {label}
             </button>
           ))}

@@ -22,7 +22,6 @@ import {
   Cookie,
   Database,
   Globe2,
-  HelpCircle,
   History,
   Languages,
   CreditCard,
@@ -945,7 +944,7 @@ export const AdminView = ({
                 size="sm"
                 asChild
               >
-                <a href="https://orbitpage.com/en-US/docs" target="_blank" rel="noopener noreferrer"><HelpCircle className="h-4 w-4" />{tr("Guide", "Guida")}</a>
+                <a href="https://orbitpage.com/en-US/docs" target="_blank" rel="noopener noreferrer">{tr("Guide", "Guida")}</a>
               </Button>
             )}
           </div>

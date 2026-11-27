@@ -2,16 +2,12 @@
 
 import { FormEvent, type ComponentType, type InputHTMLAttributes, type ReactNode, useCallback, useEffect, useState } from "react";
 import {
-  CalendarClock,
   Check,
-  Copy,
   Eye,
   Link2,
   LoaderCircle,
   Mail,
   MousePointerClick,
-  Plus,
-  RefreshCw,
   Send,
   Server,
   Trash2,
@@ -446,7 +442,7 @@ export default function NewsletterWorkspaceView({
           onClick={() => void load(true)}
           type="button"
         >
-          <RefreshCw size={16} />
+
           Try again
         </button>
       </section>
@@ -475,7 +471,7 @@ export default function NewsletterWorkspaceView({
             onClick={copySignupUrl}
             type="button"
           >
-            <Copy aria-hidden="true" size={15} />
+
             Copy signup link
           </button>
         )}
@@ -822,7 +818,7 @@ export default function NewsletterWorkspaceView({
                 {action === "smtp-save" ? (
                   <LoadingIndicator size={16} />
                 ) : (
-                  <Server size={16} />
+                  null
                 )}
                 Save settings
               </button>
@@ -836,7 +832,7 @@ export default function NewsletterWorkspaceView({
                 {action === "smtp-test" ? (
                   <LoadingIndicator size={16} />
                 ) : (
-                  <Send size={16} />
+                  null
                 )}
                 Verify and send test
               </button>
@@ -929,7 +925,7 @@ export default function NewsletterWorkspaceView({
                 {action === "subscriber-add" ? (
                   <LoadingIndicator size={16} />
                 ) : (
-                  <Plus size={16} />
+                  null
                 )}
                 Add subscriber
               </button>
@@ -955,7 +951,7 @@ export default function NewsletterWorkspaceView({
                     onClick={copySignupUrl}
                     type="button"
                   >
-                    <Copy size={15} />
+
                     Copy
                   </button>
                 </>
@@ -1347,7 +1343,7 @@ export default function NewsletterWorkspaceView({
                 {action === "campaign-save" ? (
                   <LoadingIndicator size={16} />
                 ) : (
-                  <Check size={16} />
+                  null
                 )}
                 Save draft
               </button>
@@ -1357,7 +1353,7 @@ export default function NewsletterWorkspaceView({
                 onClick={() => void queueCampaign("now")}
                 type="button"
               >
-                <Send size={16} />
+
                 Send now
               </button>
               <button
@@ -1371,7 +1367,7 @@ export default function NewsletterWorkspaceView({
                 onClick={() => void queueCampaign("schedule")}
                 type="button"
               >
-                <CalendarClock size={16} />
+
                 Schedule
               </button>
               <label className="newsletter-schedule-action">
@@ -1510,7 +1506,7 @@ export default function NewsletterWorkspaceView({
                 {action !== null ? (
                   <LoadingIndicator size={16} />
                 ) : (
-                  <Trash2 size={16} />
+                  null
                 )}
                 Delete permanently
               </button>
