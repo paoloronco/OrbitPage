@@ -4,11 +4,11 @@ Published OrbitPage articles in Markdown, grouped by language. Read them here or
 
 This archive includes English originals and completed translations. Images remain linked to their public hosts. Earlier copies remain in Git history; this is a reading archive, not a database backup.
 
-[English](./en/README.md)
+[English](./en/README.md) · [Italiano](./it/README.md) · [Español](./es/README.md) · [Français](./fr/README.md) · [Deutsch](./de/README.md) · [Português](./pt/README.md)
 
 | Published | Article | Languages |
 | --- | --- | --- |
-| 2026-11-26 | [Make a Community Activities Page Easier to Use on a Phone](./en/community-activities-page-phone-accessibility.md) | [English](./en/community-activities-page-phone-accessibility.md) |
+| 2026-11-26 | [Make a Community Activities Page Easier to Use on a Phone](./en/community-activities-page-phone-accessibility.md) | [Deutsch](./de/community-activities-page-phone-accessibility.md) · [English](./en/community-activities-page-phone-accessibility.md) · [Español](./es/community-activities-page-phone-accessibility.md) · [Français](./fr/community-activities-page-phone-accessibility.md) · [Italiano](./it/community-activities-page-phone-accessibility.md) · [Português](./pt/community-activities-page-phone-accessibility.md) |
 | 2026-11-20 | [Keep a Portrait Photographer’s Booking Page Current](./en/portrait-photographer-booking-page-maintenance.md) | [English](./en/portrait-photographer-booking-page-maintenance.md) |
 | 2026-11-20 | [Plan a Printed QR Enquiry Journey for Independent Consultants](./en/printed-qr-enquiry-journey-consultants.md) | [English](./en/printed-qr-enquiry-journey-consultants.md) |
 | 2026-11-20 | [How Digital Product Makers Can Show Who Runs a Catalogue Page](./en/verify-who-runs-digital-product-catalogue-page.md) | [English](./en/verify-who-runs-digital-product-catalogue-page.md) |

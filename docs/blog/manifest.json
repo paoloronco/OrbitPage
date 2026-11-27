@@ -3,11 +3,51 @@
   "articles": [
     {
       "slug": "community-activities-page-phone-accessibility",
+      "locale": "de",
+      "title": "Eine Seite zu Community-Aktivitäten auf dem Smartphone leichter nutzbar machen",
+      "published": "2026-11-26",
+      "revision": "a84687632fdfd86ee96b979d22bd4ebec3f79b34cc8a22bd5da6bc3d3c7badd0",
+      "sha256": "704ecb626485454c7da1585fad73a67ca1a27e86a1185d73250eb701229bfe8e"
+    },
+    {
+      "slug": "community-activities-page-phone-accessibility",
       "locale": "en",
       "title": "Make a Community Activities Page Easier to Use on a Phone",
       "published": "2026-11-26",
       "revision": "bfad9f4bea2697c4300b8267f7d2bfdf56deba3e5b213d646fc9397ed1235ace",
       "sha256": "7309f3243e7f3b3b84895e3ad63f3fe2477568029e9ac4995e9bd0d5368c747c"
+    },
+    {
+      "slug": "community-activities-page-phone-accessibility",
+      "locale": "es",
+      "title": "Haz que una página de actividades comunitarias sea más fácil de usar desde el teléfono",
+      "published": "2026-11-26",
+      "revision": "6c932963ba36c6d4b6d3c9a6c2d037f3ec5e1610316fdea07cc8cdad81b657a3",
+      "sha256": "b542a8ecfa7b08e96d711c6de6b658d0b8f3d578d05995639e9db685c5bf2154"
+    },
+    {
+      "slug": "community-activities-page-phone-accessibility",
+      "locale": "fr",
+      "title": "Rendre une page d’activités communautaires plus facile à utiliser sur un téléphone",
+      "published": "2026-11-26",
+      "revision": "b52024aafd4d8e856d5033fe8df2f801079db4d482caf0f14abe220ef1a1f7d0",
+      "sha256": "af60be2ae3929ec919f2041e765023de80831dc1dd465dd39f75a3926ab58a0f"
+    },
+    {
+      "slug": "community-activities-page-phone-accessibility",
+      "locale": "it",
+      "title": "Rendi più facile usare da telefono una pagina di attività della comunità",
+      "published": "2026-11-26",
+      "revision": "804842d257f736b89fb7d76852d9d333a05c5cfa97fdc1493ff59173a880ea56",
+      "sha256": "fc6d42ef8dc2efd29b0179cbbd91da3c6064e507d7a98351169ffb940f4f99b2"
+    },
+    {
+      "slug": "community-activities-page-phone-accessibility",
+      "locale": "pt",
+      "title": "Torne uma página de atividades comunitárias mais fácil de usar num telemóvel",
+      "published": "2026-11-26",
+      "revision": "0b9d1b8d06b9290f0e4d4ded9c1bf245f6226ca14dad9c4b7d17698c6b06ad86",
+      "sha256": "785e08e62a5e5848b791a997404f53b3ec2749b202724d1dfccfdc43fa65f0f8"
     },
     {
       "slug": "portrait-photographer-booking-page-maintenance",
