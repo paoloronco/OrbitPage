@@ -17,8 +17,7 @@ jobs:
     if: github.repository == 'paoloronco/OrbitPage' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-24.04
     timeout-minutes: 15
-    permissions:
-      contents: write
+    environment: blog-archive
     steps:
       - name: Checkout public main
         uses: actions/checkout@v7
@@ -37,9 +36,29 @@ jobs:
         run: |
           git add -- docs/blog/
           node scripts/check-markdown-links.mjs
+      - name: Detect changes
+        id: changes
+        run: |
+          if git diff --cached --quiet; then
+            echo 'changed=false' >> "$GITHUB_OUTPUT"
+          else
+            echo 'changed=true' >> "$GITHUB_OUTPUT"
+          fi
+      - name: Create repository-scoped publishing token
+        if: steps.changes.outputs.changed == 'true'
+        id: archive-token
+        uses: actions/create-github-app-token@v3
+        with:
+          client-id: ${{ vars.BLOG_ARCHIVE_CLIENT_ID }}
+          private-key: ${{ secrets.BLOG_ARCHIVE_PRIVATE_KEY }}
+          owner: paoloronco
+          repositories: OrbitPage
+          permission-contents: write
       - name: Commit changed articles only
+        if: steps.changes.outputs.changed == 'true'
         env:
-          GH_TOKEN: ${{ github.token }}
+          GH_TOKEN: ${{ steps.archive-token.outputs.token }}
+          ARCHIVE_BOT: ${{ steps.archive-token.outputs.app-slug }}
         shell: bash
         run: |
           set -Eeuo pipefail
@@ -54,7 +73,8 @@ jobs:
               *) echo 'Refusing a change outside the blog archive.' >&2; exit 1 ;;
             esac
           done < <(git diff --cached --name-only)
-          git -c user.name='github-actions[bot]' -c user.email='41898282+github-actions[bot]@users.noreply.github.com' commit -m 'docs(blog): archive published articles and translations'
+          bot_id="$(gh api "/users/${ARCHIVE_BOT}[bot]" --jq .id)"
+          git -c user.name="${ARCHIVE_BOT}[bot]" -c user.email="${bot_id}+${ARCHIVE_BOT}[bot]@users.noreply.github.com" commit -m 'docs(blog): archive published articles and translations'
           gh auth setup-git
           git pull --rebase origin main
           git push origin HEAD:main
