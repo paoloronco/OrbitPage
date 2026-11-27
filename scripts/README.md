@@ -20,6 +20,15 @@ they are not needed by a running installation. The root Dockerfile bundles only
 
 ## Contributor tools
 
+- [`sync-blog-archive.mjs`](./sync-blog-archive.mjs): mirrors published editorial
+  Markdown from the fixed public OrbitPage export into `docs/blog/`, with
+  language indexes, bounded downloads, content hashes and path checks. It needs
+  Node.js 22 or later and no installed packages. Run
+  `node --test scripts/sync-blog-archive.test.mjs` for isolated fixtures; run
+  `node scripts/sync-blog-archive.mjs` from a clean repository to synchronize.
+  It never pushes by itself. The dedicated GitHub workflow owns commits; see
+  [Public blog archive](../docs/wiki/development/github-automation.md#public-blog-archive).
+
 - [`app/scripts/install-hooks.js`](../app/scripts/install-hooks.js): optional,
   cross-platform setup for the tracked `.githooks/` directory. Use the existing
   npm command instead of separate shell or PowerShell installers:

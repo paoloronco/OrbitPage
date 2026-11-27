@@ -27,6 +27,7 @@ For the managed service, use [OrbitPage's online documentation](https://orbitpag
 | Update, back up or recover an installation | [Administration](./wiki/administration/README.md) |
 | Diagnose a problem | [Troubleshooting](./wiki/administration/Troubleshooting.md) and [Frequently asked questions](./wiki/faq.md) |
 | Change application code or write an integration | [Development](./wiki/development/README.md) and [Contributing](../CONTRIBUTING.md) |
+| Read published OrbitPage articles in English and other available languages | [Blog archive](./blog/README.md) |
 
 <a id="additional-resources"></a>
 
@@ -41,6 +42,7 @@ For the managed service, use [OrbitPage's online documentation](https://orbitpag
 | [wiki/use-cases/](./wiki/use-cases/) | Practical page-building examples, linked from the wiki index |
 | [wiki/development/](./wiki/development/README.md) | Product contracts, architecture, design, API boundaries and contributor workflows |
 | [screenshots/](./screenshots/README.md) | Screenshot provenance and published documentation media |
+| [blog/](./blog/README.md) | Public editorial articles mirrored from orbitpage.com, separate from the installation and product guides |
 | [brand/](./brand/) | Approved project artwork and exports; usage rules are in the [design system](./wiki/development/design-system.md#brand) |
 | [Maintainer backlog](./maintainers/repository-maintenance.md) | Review criteria and maintenance backlog, separate from user guides |
 

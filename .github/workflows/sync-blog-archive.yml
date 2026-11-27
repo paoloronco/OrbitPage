@@ -1,0 +1,60 @@
+name: OSS - Archive published blog articles
+
+on:
+  schedule:
+    - cron: '43 * * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: public-blog-archive
+  cancel-in-progress: false
+
+jobs:
+  archive:
+    if: github.repository == 'paoloronco/OrbitPage' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout public main
+        uses: actions/checkout@v7
+        with:
+          ref: main
+          persist-credentials: false
+      - name: Set up Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 22.23.4
+      - name: Test archive path and content boundaries
+        run: node --test scripts/sync-blog-archive.test.mjs
+      - name: Download public articles without GitHub credentials
+        run: node scripts/sync-blog-archive.mjs
+      - name: Validate archive links
+        run: |
+          git add -- docs/blog/
+          node scripts/check-markdown-links.mjs
+      - name: Commit changed articles only
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          git add -- docs/blog/
+          if git diff --cached --quiet; then
+            echo 'No new or changed public articles.'
+            exit 0
+          fi
+          while IFS= read -r path; do
+            case "$path" in
+              docs/blog/README.md|docs/blog/manifest.json|docs/blog/??/README.md|docs/blog/??/*.md) ;;
+              *) echo 'Refusing a change outside the blog archive.' >&2; exit 1 ;;
+            esac
+          done < <(git diff --cached --name-only)
+          git -c user.name='github-actions[bot]' -c user.email='41898282+github-actions[bot]@users.noreply.github.com' commit -m 'docs(blog): archive published articles and translations'
+          gh auth setup-git
+          git pull --rebase origin main
+          git push origin HEAD:main

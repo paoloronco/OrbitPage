@@ -1,0 +1,461 @@
+{
+  "version": 1,
+  "articles": [
+    {
+      "slug": "community-activities-page-phone-accessibility",
+      "locale": "en",
+      "title": "Make a Community Activities Page Easier to Use on a Phone",
+      "published": "2026-11-26",
+      "revision": "bfad9f4bea2697c4300b8267f7d2bfdf56deba3e5b213d646fc9397ed1235ace",
+      "sha256": "7309f3243e7f3b3b84895e3ad63f3fe2477568029e9ac4995e9bd0d5368c747c"
+    },
+    {
+      "slug": "portrait-photographer-booking-page-maintenance",
+      "locale": "en",
+      "title": "Keep a Portrait Photographer’s Booking Page Current",
+      "published": "2026-11-20",
+      "revision": "4c622d4b916321ef62ddd606129bf0025efc1b68d1c2c90b785d98e7bcaebc0a",
+      "sha256": "2bf089d755fdb6ed893082c11a0828ecd29ce6f4eec05c5733446cb7d1ca5031"
+    },
+    {
+      "slug": "printed-qr-enquiry-journey-consultants",
+      "locale": "en",
+      "title": "Plan a Printed QR Enquiry Journey for Independent Consultants",
+      "published": "2026-11-20",
+      "revision": "9407ad8f32ee537478d4086c2626ca4a06eaae58ebd6ef6c75c3711e710c8efd",
+      "sha256": "d09e740ca25fe160ff48e0557dd1f9bed372727619b380467c59b2177b7f4305"
+    },
+    {
+      "slug": "verify-who-runs-digital-product-catalogue-page",
+      "locale": "en",
+      "title": "How Digital Product Makers Can Show Who Runs a Catalogue Page",
+      "published": "2026-11-20",
+      "revision": "03215d0f00d65954b11d9bf1704d7fad9af2a9fa1eeed545093ef4f6a5cb32a0",
+      "sha256": "608f7c1fd3eec6bef51aca680c91cc78f1040ac063a14a015c844899162ca3ca"
+    },
+    {
+      "slug": "how-to-add-link-to-tiktok-bio-a-2026-guide-for-creators",
+      "locale": "en",
+      "title": "How to Add Link to TikTok Bio: A 2026 Guide for Creators",
+      "published": "2026-11-09",
+      "revision": "11c0e3648f28018fd352afcdb1961f99d53d159732db3f7d01120ae896990863",
+      "sha256": "3d9526a743c68ab0eb12f1069fb2a0f414e79f9e2508438e67a0653d65ddfe8e"
+    },
+    {
+      "slug": "best-free-one-page-website-template-options-for-2026",
+      "locale": "en",
+      "title": "Best Free One Page Website Template Options for 2026",
+      "published": "2026-11-08",
+      "revision": "2e280a69a376bcb1aebfe702a42ca65bffefc5ec79213c51054610cbaf1a403a",
+      "sha256": "14271bbfe1f5927cd10873bf7af08a64410c381c66e48beca11631d1737d08bb"
+    },
+    {
+      "slug": "choosing-the-best-restaurant-website-solution-in-2026",
+      "locale": "en",
+      "title": "Choosing the Best Restaurant Website Solution in 2026",
+      "published": "2026-11-07",
+      "revision": "b7efadb528b88eff4d7818e2040835dc9e382ed281ddcd5f894c8ad3a2db474c",
+      "sha256": "9a7672baf86e3170a46a8d08f2d7f0e98c5350620dbf52c7e4f603854f59afda"
+    },
+    {
+      "slug": "self-hosting-llm-privacy-performance-and-local-control",
+      "locale": "en",
+      "title": "Self Hosting LLM: Privacy, Performance, and Local Control",
+      "published": "2026-11-06",
+      "revision": "81ecbac7258d7ee16466b6db5e00272731784e0759843eb1ec6b72cdb1028978",
+      "sha256": "fbe4a1db3610285902041c24804b2d40793f7853a9a77e34e39081ea0b361b22"
+    },
+    {
+      "slug": "what-does-meaning-of-link-in-bio-actually-entail-in-2026",
+      "locale": "en",
+      "title": "What Does Meaning of Link in Bio Actually Entail in 2026?",
+      "published": "2026-11-05",
+      "revision": "93745b57a4d9c25b00ed93346bd838027b76390906b25073a6ea57f3123551f1",
+      "sha256": "6eb535e4b62b10d117084ff23e026fa41203bcbb9770628c644846a3218dc432"
+    },
+    {
+      "slug": "choosing-digital-business-card-platforms-in-2026",
+      "locale": "en",
+      "title": "Choosing Digital Business Card Platforms in 2026",
+      "published": "2026-11-04",
+      "revision": "ef0cc8ab1b28b2c5dccfbab7dd886ad341794bb4a1c2e5401c2c152134052351",
+      "sha256": "0efefb50daa47e4852eb28386c6646afdeb2548da243d935d029039f5d9d66f5"
+    },
+    {
+      "slug": "how-to-build-a-high-converting-personal-branding-site",
+      "locale": "en",
+      "title": "How to Build a High-Converting Personal Branding Site",
+      "published": "2026-11-03",
+      "revision": "8c48dd139a4175d340621a35a7c9ec532def2039e7710d06ff084f81c4cbdfa5",
+      "sha256": "fbc08af7dd049f8e3e0817cfbaa36f5a1da239d2ea841830df6ae3654130c4ba"
+    },
+    {
+      "slug": "what-is-a-link-aggregator-the-2026-guide-to-one-page-links",
+      "locale": "en",
+      "title": "What is a Link Aggregator? The 2026 Guide to One-Page Links",
+      "published": "2026-11-02",
+      "revision": "40f2794b221ba6d7e2c5d558e58f3a950214a5b0f7a07dd72c7499e1ffaffef9",
+      "sha256": "9f59efd6cac19320a8f756fea2eb195350a3f072f07d97f625f9f7107c9773c5"
+    },
+    {
+      "slug": "build-a-lead-capture-landing-page-that-owns-its-data",
+      "locale": "en",
+      "title": "Build a Lead Capture Landing Page That Owns Its Data",
+      "published": "2026-11-01",
+      "revision": "39ff20f1a139bb497160d604fe948af8c2cdadbfd32a4f794e40d1dbc432db9e",
+      "sha256": "24238529d0900b2bb8f45b2f9f11e396ce42069e8c4b31c105373cfaaffb31ad"
+    },
+    {
+      "slug": "self-hosting-ai-privacy-performance-and-implementation-guide",
+      "locale": "en",
+      "title": "Self Hosting AI: Privacy, Performance, and Implementation Guide",
+      "published": "2026-10-31",
+      "revision": "d5f91cbc0782dbc24135f79912c5d0c093fbcd92d3ed1dcc1138f6d16d30ebda",
+      "sha256": "425c6518737f65d8fc07591df9f57324b3195ba9ad323bba1a7f0a613f0867b7"
+    },
+    {
+      "slug": "one-page-website-seo-the-2026-guide-to-ranking-single-pages",
+      "locale": "en",
+      "title": "One-Page Website SEO: The 2026 Guide to Ranking Single Pages",
+      "published": "2026-10-30",
+      "revision": "e94eab14986041e634eaf122dd77fa7837fe1a6c90aa3bd391abc9e01c1fa812",
+      "sha256": "a741a0b5decc4961855d0be6b7ebb13632418148354b09a9f0ba70d3ccd3ff24"
+    },
+    {
+      "slug": "build-smarter-with-a-free-ai-landing-page-generator",
+      "locale": "en",
+      "title": "Build Smarter with a Free AI Landing Page Generator",
+      "published": "2026-10-28",
+      "revision": "1e52f4b372ef06f16bb8d8367814ba3fa83113157bda4d15792e0a1b16d79c3a",
+      "sha256": "ddb1a3e3dc52013388dba15369efd33a04fa726f32dd428553905ed60e11cfed"
+    },
+    {
+      "slug": "how-to-choose-a-digital-business-card-creator-in-2026",
+      "locale": "en",
+      "title": "How to Choose a Digital Business Card Creator in 2026",
+      "published": "2026-10-27",
+      "revision": "c1cf86e02e37ba2d29ab782b4a8bfdddde72a562669350d04017efd51f5ce92b",
+      "sha256": "bce8f7c79d7bab2f537d6794ce2316fe10e9c753759770619ccd4d19182d22ec"
+    },
+    {
+      "slug": "what-is-a-bio-site-the-guide-to-open-source-link-management",
+      "locale": "en",
+      "title": "What Is a Bio Site? Examples and How to Create One",
+      "published": "2026-10-26",
+      "revision": "5d70b15293c144c59408117890366b5c116118ade77dc9e8cd01066dfe864a67",
+      "sha256": "c801ce33d4cc4dacf0c3304ca234e09035366a976a14b20601028f9453391040"
+    },
+    {
+      "slug": "link-click-tracking-how-to-monitor-and-measure-engagement",
+      "locale": "en",
+      "title": "Link Click Tracking: How to Monitor and Measure Engagement",
+      "published": "2026-10-25",
+      "revision": "3c3d455f661187a3a3eecaaa61a8c3a45b521c950edd3808ed135752790a5981",
+      "sha256": "5ceeb552755f6e0b81291f8789803b3f25f2c685a8ada7e68a93c3c546def5f6"
+    },
+    {
+      "slug": "how-to-create-a-vanity-url-for-better-brand-recognition",
+      "locale": "en",
+      "title": "How to Create a Vanity URL for Better Brand Recognition",
+      "published": "2026-10-24",
+      "revision": "b6d4542ebc7c4e82c0ed6f62bd44793b77a6c67948d9716c2e761ba1357e7418",
+      "sha256": "2e522abd6ff034664acc9927a6094fcc8ee05a1d168f4d160b3ae50c5b3a1ca4"
+    },
+    {
+      "slug": "the-best-digital-business-card-for-2026-own-your-identity",
+      "locale": "en",
+      "title": "The Best Digital Business Card for 2026: Own Your Identity",
+      "published": "2026-10-23",
+      "revision": "494bb98e91e7c88a3d85aed88ec032f29403de439def96c7e820b0ef9710ddcd",
+      "sha256": "69f30d769a0965c15d917804a9f1d0e82583e2acd357c8277938a18655ecf578"
+    },
+    {
+      "slug": "build-a-digital-art-portfolio-that-converts-in-2026",
+      "locale": "en",
+      "title": "Build a Digital Art Portfolio That Converts in 2026",
+      "published": "2026-10-22",
+      "revision": "eeb619d6bd81606d80ca8b192ec7d414e629f1652d35a92d124dea00d5e98cde",
+      "sha256": "59ce168475d18a3a76324ac8fc30216ddaf580e2d927f6076a9e67f10cac12da"
+    },
+    {
+      "slug": "best-link-in-bio-platforms-open-source-vs-proprietary",
+      "locale": "en",
+      "title": "Best Link in Bio Platforms: Open-Source vs. Proprietary",
+      "published": "2026-10-21",
+      "revision": "4bb5f6d5f421d39bf945dad60bcb4dea23a8be07a29c7694b4d46f23fcace6ce",
+      "sha256": "f033ae931fed9a8276936a8d68ae57759973e9c78d26d7fff3ef11f951ec1dc5"
+    },
+    {
+      "slug": "how-to-build-a-high-converting-digital-marketing-portfolio",
+      "locale": "en",
+      "title": "How to Build a High-Converting Digital Marketing Portfolio",
+      "published": "2026-10-20",
+      "revision": "d544c4add12bbf7cc57c94d19deaf61afe93bd0ddb289e4380d7659fc9394b1b",
+      "sha256": "7df2566acf847d7b81a1ae8cbf09e5ae3953ef2147a3ecfbfb8625dbd63b39f9"
+    },
+    {
+      "slug": "build-a-personal-landing-page-that-converts-in-2026",
+      "locale": "en",
+      "title": "Build a Personal Landing Page That Converts in 2026",
+      "published": "2026-10-19",
+      "revision": "795facb52ae54bf8a70569bbed197f1a17b4c8277fe02c9c677557e9a8adbf60",
+      "sha256": "efc783a9aba6f2ab7b3c9012be0110ff491b219a116f5ae6f82c1690c8718a1b"
+    },
+    {
+      "slug": "one-page-website-examples-to-inspire-your-next-project",
+      "locale": "en",
+      "title": "One-Page Website Examples to Inspire Your Next Project",
+      "published": "2026-10-18",
+      "revision": "a25057a838caa6b845be491df2ec9f3980ac94ed4d05492569a82ea2dd1082d2",
+      "sha256": "7068ea78e87b3d862bd282e9e66c8727c02be0b9c44fd52ad14ca81fea9e595b"
+    },
+    {
+      "slug": "best-online-restaurant-menu-builder-for-2026",
+      "locale": "en",
+      "title": "Best Online Restaurant Menu Builder for 2026",
+      "published": "2026-10-17",
+      "revision": "32c977d1a44bb7e46a913eb982412f98ec1a28ae974d7a5e1e44c071a69fc09f",
+      "sha256": "19155961c60ed807b406a025c67b91b19904f92615e2bfd8a3fee0885530bd87"
+    },
+    {
+      "slug": "what-is-the-best-link-in-bio-tool-for-content-creators-in",
+      "locale": "en",
+      "title": "What Is the Best Link in Bio Tool for Content Creators in 2026?",
+      "published": "2026-10-16",
+      "revision": "f944dea0b35b379d270135df00a017dd025cdf6d2bb7ebfb56ef3ab0ee76f9b0",
+      "sha256": "045b496d72e407d8987e33158ee031cbf9ebfabb2fa67c77fccb9675a651cd0f"
+    },
+    {
+      "slug": "choosing-a-link-management-tool-for-growth-in-2026",
+      "locale": "en",
+      "title": "Choosing a Link Management Tool for Growth in 2026",
+      "published": "2026-10-15",
+      "revision": "07ef42cb7317f9496413066393cf58eb769dca77af18ca88f953572f69cfd642",
+      "sha256": "29be9534eacd6bf01c30f8e76990705c4da778dd58cf1c92177089c24ccaac4e"
+    },
+    {
+      "slug": "choosing-a-one-page-website-builder-for-open-source-control",
+      "locale": "en",
+      "title": "Choosing a One Page Website Builder for Open-Source Control",
+      "published": "2026-10-14",
+      "revision": "785919ab1e5aa41efba3e9ec011938ff618166eaa634aeaf3bbb329759b31966",
+      "sha256": "753d311e41993db3741db7ff1afbd236738168febadcfed85d939aa7027af3a0"
+    },
+    {
+      "slug": "how-to-ai-generate-landing-page-content-and-layouts-in-2026",
+      "locale": "en",
+      "title": "How to AI Generate Landing Page Content and Layouts in 2026",
+      "published": "2026-10-13",
+      "revision": "9687639d4ce1648d631b717262cd2ebf4ebfdec9ac7591afbd632be2e3e97538",
+      "sha256": "2d546cd15070cb094ec71cdbe8aec4ee23a238dbc0248095bc4b088ceb5b7f37"
+    },
+    {
+      "slug": "best-ai-website-builder-options-for-2026-a-definitive-guide",
+      "locale": "en",
+      "title": "Best AI Website Builder Options for 2026: A Definitive Guide",
+      "published": "2026-10-12",
+      "revision": "c2dc42932fd6ece0c65f65613d9418210394a54fefdfb503345a5b3520a099e7",
+      "sha256": "01fb8fd5c68d3d71beb2a721222f0b90ccf60dd485a69f4c38d130a688aafc4c"
+    },
+    {
+      "slug": "how-to-get-a-free-digital-business-card-in-2026",
+      "locale": "en",
+      "title": "How to Get a Free Digital Business Card in 2026",
+      "published": "2026-10-11",
+      "revision": "61064fe6751886428c467bc85c24d7bfad15d26e95cef510db2daa5f40acfd9d",
+      "sha256": "11c715e56badcc14e1af9845b6d1ffd2f557d6c68843688adaa389e48afbc478"
+    },
+    {
+      "slug": "how-to-add-link-in-tiktok-bio-a-2026-guide-for-creators",
+      "locale": "en",
+      "title": "How to Add Link in TikTok Bio: A 2026 Guide for Creators",
+      "published": "2026-10-10",
+      "revision": "df38b1d37ad4444d0c76a684a59c584fadbfdee0d986a586ee5bd13220640cc0",
+      "sha256": "ec968772df18c275f1ad8d0f6c4149c2398b1c0b78649a924ef6c39743ae5602"
+    },
+    {
+      "slug": "accessible-link-in-bio-checklist",
+      "locale": "en",
+      "title": "An accessibility checklist for a link-in-bio page",
+      "published": "2026-09-17",
+      "revision": "210239472c510841522be1599134e2cb3b98d05f0a934e2e38f9065012d06391",
+      "sha256": "3d372819bc795aa1a386c892a827adfa1794a1975065e63036e0dcdfa5121406"
+    },
+    {
+      "slug": "ai-prompts-for-link-in-bio",
+      "locale": "en",
+      "title": "Five AI requests that make a link-in-bio page more useful",
+      "published": "2026-09-17",
+      "revision": "5ff364b9f93df0e29bf9815b9b9e93771543fb7cbb28803c1c94fc588729e04b",
+      "sha256": "9b27b1fc0312dff6f91ae4b372af4d3d1dff141add81c813b5f96b54febb2820"
+    },
+    {
+      "slug": "ai-search-visibility",
+      "locale": "en",
+      "title": "Can AI search find your page? Start with facts people can verify",
+      "published": "2026-09-17",
+      "revision": "dee408cbc4568febebc37c06975de07df0983f7359b9bbf99b7b4bf95bc474d9",
+      "sha256": "71001c860a5f11bb35b9740931d39308976cad838cf7d799de639ea6bec8b22f"
+    },
+    {
+      "slug": "freelancer-portfolio-link-in-bio",
+      "locale": "en",
+      "title": "Make a freelancer link-in-bio page work like a small portfolio",
+      "published": "2026-09-17",
+      "revision": "735500e67ff3774a91b8bca6b035bfa7ef615b9e0fdc929f80f3bd6a9d52bce1",
+      "sha256": "38fe2ac52b13ef10e495c93c458a07b353f67843e716187bd6465476c92c0eec"
+    },
+    {
+      "slug": "how-many-links-in-bio",
+      "locale": "en",
+      "title": "How many links should you put in a link-in-bio page?",
+      "published": "2026-09-17",
+      "revision": "1f323d779370bd9f1a1df642c8bb63d6cd75fb6fde61412ce7bb92c175923699",
+      "sha256": "19a0f55aab0f21a5ad3596f38ca6f82de24c45ea6dba863f0a1a64d21a3cc2ea"
+    },
+    {
+      "slug": "link-in-bio-audit",
+      "locale": "en",
+      "title": "A 15-minute audit for a link-in-bio page that stays useful",
+      "published": "2026-09-17",
+      "revision": "fe64573a87303c99d27fa8888aebff179f2807fe419d360cfafaaf402faa46dd",
+      "sha256": "293f3b4c0dacfaa54c381d14bccc8d14115e4eab9ca280474329a347f22b02d2"
+    },
+    {
+      "slug": "link-in-bio-for-community-groups",
+      "locale": "en",
+      "title": "A link-in-bio page for community groups and small nonprofits",
+      "published": "2026-09-17",
+      "revision": "334c7f16e4fdbc7d349e940012c69ad202031c5e5b7792dc104ebb95e1edd065",
+      "sha256": "be643822eea5d78a4c3e125738609516b6f5711caaf5417f1d7a942212813221"
+    },
+    {
+      "slug": "link-in-bio-for-events",
+      "locale": "en",
+      "title": "An event link-in-bio page should answer four questions first",
+      "published": "2026-09-17",
+      "revision": "75dd1d380b30b7d32bd018adf6222ad87e273189210d0456a50dd77b520119d2",
+      "sha256": "926b1bbe5ffa7fbf42a4f7ae26f4c56b16a48f530ce5a7f2acab345293d4fd83"
+    },
+    {
+      "slug": "link-in-bio-for-local-business",
+      "locale": "en",
+      "title": "What should a local business put on its link-in-bio page?",
+      "published": "2026-09-17",
+      "revision": "ff25dd34ea3215915109a34e874e002dddeb9910d599d321300771da8acb206a",
+      "sha256": "aed4d34ff0cc38023742cd33fda10984c43531826bccbfc0d88ec8162a609e9d"
+    },
+    {
+      "slug": "link-in-bio-for-musicians",
+      "locale": "en",
+      "title": "A link-in-bio page for musicians: release first, everything else in order",
+      "published": "2026-09-17",
+      "revision": "bbb37940f9f7ecf47078a71cdd9afab718bb8f1da10ca4d56874b02c979a1d59",
+      "sha256": "52b6439c26d9457e7cebb41190f06cf8534c8a48242b4face070afbf2ecff9ca"
+    },
+    {
+      "slug": "make-qr-menu-useful",
+      "locale": "en",
+      "title": "A better QR menu starts with the guest's next question",
+      "published": "2026-09-17",
+      "revision": "6c1103496cb7051363e8270dbdfef1d545c6ba97a6406b9004b06992adf5189a",
+      "sha256": "1db664b699eb101420671497466c6a73a31dd771a8a9e41f1a6e0e6c47914f6b"
+    },
+    {
+      "slug": "measure-link-in-bio-campaign",
+      "locale": "en",
+      "title": "What to measure after a link-in-bio campaign",
+      "published": "2026-09-17",
+      "revision": "69798b3a458c258c33b9d81458dbaeb1fe77ef58d0968921a7fe15dce01aab67",
+      "sha256": "4770f72a4de15b4e50471f10c9908181a2437ee7c1a889fb695da297666c66f5"
+    },
+    {
+      "slug": "newsletter-signup-link-in-bio",
+      "locale": "en",
+      "title": "How to make newsletter signup useful on a link-in-bio page",
+      "published": "2026-09-17",
+      "revision": "7d09d080e481540794e9c1a6c1ee396046b2f06c3b89ae41bf4c9301f8eddea9",
+      "sha256": "a6026e12f0a5f8e94a6297756643d387b2e6df9fc1aef0ff19226eddf468f311"
+    },
+    {
+      "slug": "qr-codes-for-offline-campaigns",
+      "locale": "en",
+      "title": "A QR code campaign works only when the destination stays useful",
+      "published": "2026-09-17",
+      "revision": "ff733207683ff6a90a1c1a26baf1c52781f8934a4361b461268052215beb91d6",
+      "sha256": "c924d47125fcf0652b9fdc5a80a5bbb7120fdce2624c215aa188cd5ece967d83"
+    },
+    {
+      "slug": "sell-digital-download-link-in-bio",
+      "locale": "en",
+      "title": "How to sell a digital download from a link-in-bio page",
+      "published": "2026-09-17",
+      "revision": "e044a47927b754fec76db0cd3edae515ff580bcd45f94e270933762292b8edcc",
+      "sha256": "753f68168e1fece73e408a04e9fb64d7615c9168a25dc1b8b33a63000865c8b1"
+    },
+    {
+      "slug": "start-page-design-from-screenshot",
+      "locale": "en",
+      "title": "Start a page design from a screenshot—without copying its mistakes",
+      "published": "2026-09-17",
+      "revision": "831bae47326bbe12ed576eee23c0f9926c40282b16272d29dc20c9dafbeb2d1e",
+      "sha256": "486b15584119c3ea43cd7eefdb1c0e676c1a6eec05eeae246623e694c84a4af7"
+    },
+    {
+      "slug": "when-to-add-custom-domain",
+      "locale": "en",
+      "title": "When does your public page need its own domain?",
+      "published": "2026-09-17",
+      "revision": "752427ee9963074235eba3f6fe4aec509dddf6a83833dfbc613547ee9e99fe9f",
+      "sha256": "e536d80386f9f4fa83226d082ac97f906bcc43eb26e0ba5bf208b5450462f80f"
+    },
+    {
+      "slug": "write-page-title-and-link-preview",
+      "locale": "en",
+      "title": "How to write a page title and link preview people can trust",
+      "published": "2026-09-17",
+      "revision": "adc1dfdc3a8b97ad03b0fd1300e80357d8326f1b13180574127b38356cda727a",
+      "sha256": "85c921166ed52d9ae5992b69ef69aa74a307b3b2c6859f2071c2410733ca0d10"
+    },
+    {
+      "slug": "how-to-improve-link-in-bio-clicks",
+      "locale": "en",
+      "title": "How to improve link-in-bio clicks without adding more links",
+      "published": "2026-08-05",
+      "revision": "7aa499037f70eeaa3940c1b124c2d15fb388a14aae338fe983df0572f165e52b",
+      "sha256": "6943baec91dbeccbfb24f21939e6fd0c92675d5e22d9008d122375804a939d8f"
+    },
+    {
+      "slug": "link-in-bio-examples",
+      "locale": "en",
+      "title": "Seven link-in-bio page structures for different kinds of work",
+      "published": "2026-08-05",
+      "revision": "05496326f20a5fff0b6a63c2121b3a40ee5ef5fb4e3fc0133d49d4495312362d",
+      "sha256": "43611bde9317b89f0b2cc9d31284ef6ea8026f2bdbdc6a4d14a799cd763bd866"
+    },
+    {
+      "slug": "link-in-bio-seo",
+      "locale": "en",
+      "title": "Link-in-bio SEO: what helps a one-page site rank?",
+      "published": "2026-08-05",
+      "revision": "62006d3598806f633481c096c435ea918b144145586acc07e9b888f00d002935",
+      "sha256": "39c16b6bedb0d45993655e8bd81ee65b3761382c0f856fe0e0af6b7d6130da24"
+    },
+    {
+      "slug": "one-page-website-vs-link-in-bio",
+      "locale": "en",
+      "title": "One-page website or link in bio: which format fits the job?",
+      "published": "2026-08-05",
+      "revision": "62412e00a575a2b6d8ef08d410a4abe085b859c6d88ef3738c86b1ef7bc8c73b",
+      "sha256": "781ea57bd621a18db83cabe97f7d2c9e5c6c3503e3e348ca500cf4502978f7f4"
+    },
+    {
+      "slug": "what-is-a-link-in-bio",
+      "locale": "en",
+      "title": "What is a link in bio, and what should the page contain?",
+      "published": "2026-08-05",
+      "revision": "ede3b7910e21961415bffbdff70ea36be0214e10fe4fd8f41e311bf3b64a0ecd",
+      "sha256": "e65f343aebe3ceae75489af56badfe80e9f76203104bd4e6ebeb8563c1386baf"
+    }
+  ]
+}

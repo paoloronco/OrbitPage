@@ -36,6 +36,7 @@ jobs:
         working-directory: .
         run: |
           node --test scripts/check-markdown-links.test.mjs
+          node --test scripts/sync-blog-archive.test.mjs
           node scripts/check-markdown-links.mjs
 
       - name: Reject tracked runtime data and local configuration

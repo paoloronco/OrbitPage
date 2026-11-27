@@ -43,6 +43,8 @@ See [Dashboard guides](./dashboard/README.md) for section instructions and previ
 
 Use these practical guides to choose a content order, build the page and check the public result.
 
+The [blog archive](../blog/README.md) also contains published OrbitPage articles, grouped by language.
+
 - [Personal pages](./use-cases/personal-pages.md)
 - [Portfolios and job applications](./use-cases/portfolios-and-job-search.md)
 - [Events and invitations](./use-cases/events-and-gatherings.md)

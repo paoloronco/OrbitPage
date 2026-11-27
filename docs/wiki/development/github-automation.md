@@ -5,6 +5,43 @@
 | [quality-checks.yml](../../../.github/workflows/quality-checks.yml) | Push/PR quality gates plus weekly audits, tests, browser/Docker checks and supported-Node compatibility |
 | [publish-release.yml](../../../.github/workflows/publish-release.yml) | Publish versioned images and a GitHub release after main checks pass |
 | [sync-gitea-mirror.yml](../../../.github/workflows/sync-gitea-mirror.yml) | Copy Git branches and tags to the Gitea mirror |
+| [sync-blog-archive.yml](../../../.github/workflows/sync-blog-archive.yml) | Archive published public blog articles and completed translations under `docs/blog/` |
+
+## Public blog archive
+
+The archive workflow runs hourly at minute 43 UTC and supports **Run workflow**
+on `main`. It reads the public manifest at
+`https://orbitpage.com/api/blog/archive` and downloads changed Markdown exports
+from `/api/blog/archive/{slug}?locale={language}`. The first run includes
+existing published articles. Completed translations are added as they become
+available; English fallbacks are never labelled as translations. Generation and
+publication remain outside this repository.
+
+[`sync-blog-archive.mjs`](../../../scripts/sync-blog-archive.mjs) accepts only
+the fixed public origin, known languages and safe article slugs. It verifies
+response types, language and SHA-256, bounds downloads and file sizes, rejects
+symbolic links and writes only `docs/blog/`. It generates article and language
+indexes and a deterministic manifest. Repeat runs without content changes make
+no commit. Failed exports stop the run; earlier published copies are retained.
+Images remain linked to their public hosts. This reading archive and its Git
+history supplement the website's storage; they do not replace database backups.
+
+n8n and the website have no GitHub write credential for this archive. The job
+uses its short-lived repository `GITHUB_TOKEN` with `contents: write`; GitHub
+does not offer directory-level restrictions for that permission. The script
+and commit step enforce the `docs/blog/` boundary. Checkout credentials are not
+persisted, and the token is passed only to the commit/push step. That step stages
+only the archive, checks its paths, rebases on public `main` and pushes without
+force. No tenant records, drafts, AI responses or private repository files are
+exported. Archive commits use the GitHub Actions bot identity. They do not start
+recursive push-triggered Actions runs; the separate hourly Gitea mirror still
+copies the resulting commits.
+
+Inspect **OSS - Archive published blog articles** in Actions after a publication.
+Re-run after resolving an export, validation, permission or rebase failure;
+unchanged article hashes prevent duplicate work. Disable that workflow to stop
+repository updates without interrupting the website or n8n. GitHub may delay
+scheduled runs; see its [schedule contract](https://docs.github.com/en/actions/reference/workflows-and-actions/events-that-trigger-workflows#schedule).
 
 ## Weekly maintenance checks
 
