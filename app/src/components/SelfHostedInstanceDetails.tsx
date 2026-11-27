@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Database, ExternalLink, RefreshCw, ShieldCheck, Sliders } from '@/components/ui/material-icons';
+import { Database, RefreshCw, ShieldCheck, Sliders } from '@/components/ui/material-icons';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
@@ -124,7 +124,7 @@ export function SelfHostedInstanceDetails({ canManageInstance, version, onInstal
             <div className="account-instance-release-slot">
               {update
                 ? <a className="account-instance-release-link" href={update.releaseUrl} target="_blank" rel="noopener noreferrer">{tr('Release notes', 'Note di rilascio')}</a>
-                : <span className="account-instance-release-link is-placeholder" aria-hidden="true"><ExternalLink className="h-3 w-3" />{tr('Release notes', 'Note di rilascio')}</span>}
+                : <span className="account-instance-release-link is-placeholder" aria-hidden="true">{tr('Release notes', 'Note di rilascio')}</span>}
             </div>
           </section>
         </div>
