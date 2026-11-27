@@ -220,7 +220,7 @@ export const InitialSetup = ({ onSetupComplete }: InitialSetupProps) => {
 
           <footer className="initial-setup-footer">
             {step === 0 ? (
-              <Button onClick={() => void refreshChecks()} type="button" variant="outline" disabled={checksLoading}><RefreshCw className={checksLoading ? "setup-spinner" : ""} size={16} />{tr("Run again", "Ripeti controllo")}</Button>
+              <Button onClick={() => void refreshChecks()} type="button" variant="outline" disabled={checksLoading}>{checksLoading && <RefreshCw className="setup-spinner" size={16} />}{tr("Run again", "Ripeti controllo")}</Button>
             ) : (
               <Button onClick={() => { setError(""); setStep((value) => Math.max(0, value - 1)); }} type="button" variant="outline">{tr("Back", "Indietro")}</Button>
             )}

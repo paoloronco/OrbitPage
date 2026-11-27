@@ -118,7 +118,7 @@ export function SelfHostedInstanceDetails({ canManageInstance, version, onInstal
                 : tr('Check for a newer stable release.', 'Verifica se è disponibile una nuova versione stabile.')}
             </p>
             <div className="account-instance-update-actions">
-              <Button type="button" className="account-secondary-action" variant="outline" disabled={checkingUpdates} aria-busy={checkingUpdates} onClick={() => void checkUpdates()}><RefreshCw className={`h-4 w-4${checkingUpdates ? ' animate-spin' : ''}`} />{tr('Check for updates', 'Verifica aggiornamenti')}</Button>
+              <Button type="button" className="account-secondary-action" variant="outline" disabled={checkingUpdates} aria-busy={checkingUpdates} onClick={() => void checkUpdates()}>{checkingUpdates && <RefreshCw className="h-4 w-4 animate-spin" />}{tr('Check for updates', 'Verifica aggiornamenti')}</Button>
               <Button type="button" className="account-primary-action" variant="gradient" disabled={!update?.updateAvailable || checkingUpdates || DEMO_MODE || !canManageInstance} onClick={() => update && onInstallUpdate(update.version)}>{tr('Install update…', 'Installa aggiornamento…')}</Button>
             </div>
             <div className="account-instance-release-slot">
