@@ -38,7 +38,7 @@ export function VersionHistory({ canRestore = true }: { canRestore?: boolean }) 
     setMessage('');
     try {
       await versionHistoryApi.restore(revision);
-      setMessage(tr('Version restored. Reloading…', 'Versione ripristinata. Ricaricamento…'));
+      setMessage(tr('Reloading your page with the restored version…', 'Ricaricamento della pagina con la versione ripristinata…'));
       window.setTimeout(() => window.location.reload(), 900);
     } catch (error) {
       setMessage(error instanceof Error ? error.message : tr('Restore failed.', 'Ripristino non riuscito.'));

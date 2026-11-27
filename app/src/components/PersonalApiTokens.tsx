@@ -59,7 +59,7 @@ export function PersonalApiTokens() {
       });
       setTokens((current) => [result.record, ...current]);
       setCreatedToken(result.token); setName(''); setPassword('');
-      setMessage(tr("Token created. Copy it now: OrbitPage will not show it again.", "Token creato. Copialo ora: OrbitPage non lo mostrerà di nuovo."));
+      setMessage(tr("Your API token has been created. Copy it now: OrbitPage will not show it again.", "Il tuo token API è stato creato. Copialo ora: OrbitPage non lo mostrerà di nuovo."));
     } catch (requestError) {
       setError(requestError instanceof Error ? requestError.message : tr("The personal API token could not be created.", "Non è stato possibile creare il token API personale."));
     } finally { setBusy(null); }
@@ -71,7 +71,7 @@ export function PersonalApiTokens() {
     try {
       const result = await personalApiTokensApi.revoke(token.tokenId);
       setTokens((current) => current.map((item) => item.tokenId === token.tokenId ? result.token : item));
-      setMessage(tr("Token revoked.", "Token revocato."));
+      setMessage(tr("Access through this API token has been revoked.", "L’accesso tramite questo token API è stato revocato."));
     } catch (requestError) {
       setError(requestError instanceof Error ? requestError.message : tr("The token could not be revoked.", "Non è stato possibile revocare il token."));
     } finally { setBusy(null); }
@@ -93,7 +93,7 @@ export function PersonalApiTokens() {
           <div><strong>{tr("Quick start", "Avvio rapido")}</strong><span>{tr("Verify the token by fetching links and the current revision. The REST guide and OpenAPI document cover every dashboard resource and the If-Match rules for draft writes.", "Verifica il token recuperando i link e la revisione corrente. La guida REST e il documento OpenAPI descrivono tutte le risorse della dashboard e le regole If-Match per le modifiche alla bozza.")}</span></div>
           <pre>{curlExample}</pre>
           <div className="api-token-example-actions">
-            <button className="team-button secondary compact" onClick={() => void copy(curlExample, tr("Example copied.", "Esempio copiato."))} type="button"><Copy size={15} /> {tr("Copy example", "Copia esempio")}</button>
+            <button className="team-button secondary compact" onClick={() => void copy(curlExample, tr("The example has been copied to your clipboard.", "L’esempio è stato copiato negli appunti."))} type="button"><Copy size={15} /> {tr("Copy example", "Copia esempio")}</button>
             <a className="team-button secondary compact" href="https://github.com/paoloronco/OrbitPage/blob/main/docs/wiki/api.md" rel="noreferrer" target="_blank"><ExternalLink size={15} /> {tr("Open REST API guide", "Apri la guida API REST")}</a>
           </div>
         </div>
@@ -106,7 +106,7 @@ export function PersonalApiTokens() {
           <div className="api-token-create-actions"><button className="team-button primary" disabled={busy !== null || !name.trim() || !password} onClick={() => void createToken()} type="button">{busy === 'create' ? <Loader2 className="spin" size={17} /> : <Plus size={17} />}{tr("Create token", "Crea token")}</button><span className="team-doc-help api-token-security-help"><button aria-describedby="api-token-security-tooltip" aria-label={tr("Your token is shown only once", "Il token viene mostrato una sola volta")} className="team-doc-help-trigger" type="button"><Info aria-hidden="true" size={15} /></button><span className="team-doc-tooltip" id="api-token-security-tooltip" role="tooltip"><strong>{tr("Your token is shown only once", "Il token viene mostrato una sola volta")}</strong><span>{tr("Copy it immediately and store it securely, like a password. Rotate it when needed and revoke it when you no longer use it.", "Copialo subito e conservalo in modo sicuro, come una password. Sostituiscilo quando necessario e revocalo quando non lo usi più.")}</span></span></span><span className="api-token-active-count">{activeCount}/10 {tr("Active", "Attivo")}</span></div>
         </div>
 
-        {createdToken && <div className="api-token-reveal" role="status"><div><Check size={18} /><strong>{tr("Copy this token now", "Copia subito questo token")}</strong><span>{tr("You will not be able to see it again after leaving this page.", "Non potrai più visualizzarlo dopo aver lasciato questa pagina.")}</span></div><code>{createdToken}</code><button className="team-button secondary compact" onClick={() => void copy(createdToken, tr("Token copied.", "Token copiato."))} type="button"><Copy size={16} /> {tr("Copy", "Copia")}</button></div>}
+        {createdToken && <div className="api-token-reveal" role="status"><div><Check size={18} /><strong>{tr("Copy this token now", "Copia subito questo token")}</strong><span>{tr("You will not be able to see it again after leaving this page.", "Non potrai più visualizzarlo dopo aver lasciato questa pagina.")}</span></div><code>{createdToken}</code><button className="team-button secondary compact" onClick={() => void copy(createdToken, tr("The API token has been copied to your clipboard.", "Il token API è stato copiato negli appunti."))} type="button"><Copy size={16} /> {tr("Copy", "Copia")}</button></div>}
 
         <div className="api-token-list" aria-busy={busy === 'loading'}>
           {busy === 'loading' ? <div className="api-token-empty"><Loader2 className="spin" size={18} /> {tr("Loading tokens...", "Caricamento token...")}</div> : tokens.length === 0 ? <div className="api-token-empty"><KeyRound size={19} /><span><strong>{tr("No personal tokens yet", "Nessun token personale")}</strong><small>{tr("Create one when an external automation needs controlled access to this workspace.", "Creane uno quando un'automazione esterna richiede un accesso controllato a questo workspace.")}</small></span></div> : tokens.map((token) => {

@@ -392,7 +392,7 @@ export const ThemeCustomizer = ({
           {(hasDraft || saveState === "saved" || saveState === "error") ? (
             <div className={`mb-5 flex items-center gap-2 rounded-xl border px-4 py-3 text-sm ${saveState === "error" ? "border-red-200 bg-red-50 text-red-700" : saveState === "saved" ? "border-emerald-200 bg-emerald-50 text-emerald-700" : "border-amber-200 bg-amber-50 text-amber-800"}`} role={saveState === "error" ? "alert" : "status"}>
               {saveState === "error" ? <AlertTriangle className="h-4 w-4 shrink-0" /> : saveState === "saved" ? <CheckCircle className="h-4 w-4 shrink-0" /> : <span className="h-2 w-2 shrink-0 rounded-full bg-amber-500" />}
-              <span>{saveState === "error" ? saveError || tr("Theme could not be saved.", "Non è stato possibile salvare il tema.") : saveState === "saved" ? tr("Theme saved successfully.", "Tema salvato correttamente.") : tr("Preview active. Save when you are ready to publish it.", "Anteprima attiva. Salva quando sei pronto a pubblicarla.")}</span>
+              <span>{saveState === "error" ? saveError || tr("Theme could not be saved.", "Non è stato possibile salvare il tema.") : saveState === "saved" ? tr("Theme saved successfully.", "Tema salvato correttamente.") : tr("You are previewing unsaved theme changes. Save them to publish the updated design.", "Stai visualizzando un’anteprima delle modifiche non salvate al tema. Salvale per pubblicare il nuovo design.")}</span>
             </div>
           ) : null}
 

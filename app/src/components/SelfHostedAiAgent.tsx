@@ -71,7 +71,7 @@ export function SelfHostedAiAgent({ historyKey = "admin", onApplied }: { history
     thinking: tr("Reviewing your page…", "Sto analizzando la pagina…"),
     apply: tr("Apply changes", "Applica modifiche"),
     applying: tr("Applying…", "Applicazione…"),
-    applied: tr("Changes applied.", "Modifiche applicate."),
+    applied: tr("Your page now includes the approved changes.", "La pagina ora include le modifiche approvate."),
     safety: tr(
       "No change is applied without your confirmation.",
       "Nessuna modifica viene applicata senza la tua conferma.",

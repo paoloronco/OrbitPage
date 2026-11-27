@@ -187,6 +187,7 @@ export default function NewsletterWorkspaceView({
   dismissOnOutsideClick = true,
   subscriberTranslator,
 }: NewsletterWorkspaceProps) {
+  const tr: NewsletterTranslator = subscriberTranslator ?? (english => english);
   const [data, setData] = useState<NewsletterDashboardData | null>(null);
   const [localView, setLocalView] = useState<NewsletterView>("overview");
   const view = selectedView ?? localView;
@@ -324,7 +325,7 @@ export default function NewsletterWorkspaceView({
           method: "POST",
           body: JSON.stringify({ ...subscriber, source: "manual" }),
         }),
-      "Subscriber added.",
+      tr("The subscriber has been added to your list.", "L’iscritto è stato aggiunto alla tua lista."),
     );
     if (result) setSubscriber({ email: "", name: "", consentConfirmed: false });
   }
@@ -338,7 +339,7 @@ export default function NewsletterWorkspaceView({
         request(`/api/newsletter/subscribers/${encodeURIComponent(id)}`,
           { method: "DELETE" },
         ),
-      "Subscriber removed.",
+      tr("The subscriber has been removed from your list.", "L’iscritto è stato rimosso dalla tua lista."),
     );
   }
 
@@ -373,7 +374,7 @@ export default function NewsletterWorkspaceView({
             body: JSON.stringify({ scheduledFor: date }),
           },
         ),
-      mode === "now" ? "Campaign queued for sending." : "Campaign scheduled.",
+      mode === "now" ? "Campaign queued for sending." : tr("Your newsletter campaign has been scheduled.", "La campagna newsletter è stata programmata."),
     );
     if (!queued) return;
     setCampaign({ ...EMPTY_CAMPAIGN, content: { ...EMPTY_CAMPAIGN.content } });
@@ -421,7 +422,7 @@ export default function NewsletterWorkspaceView({
     if (!data?.signupUrl) return;
     try {
       await navigator.clipboard.writeText(data.signupUrl);
-      setMessage("Signup link copied.");
+      setMessage(tr("The signup link has been copied to your clipboard.", "Il link di iscrizione è stato copiato negli appunti."));
     } catch {
       setError("The browser could not copy the signup link.");
     }
