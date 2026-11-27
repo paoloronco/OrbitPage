@@ -29,7 +29,11 @@ function validateArticles(articles, state = false) {
 async function readPublic(url, fetcher, expectedType) {
   // Remote data never supplies a URL, host, destination path or executable command.
   const response = await fetcher(url, { redirect: 'error', signal: AbortSignal.timeout(30_000), headers: { Accept: expectedType } });
-  if (!response.ok || !response.headers.get('content-type')?.startsWith(expectedType)) throw new Error(`Public export failed: ${response.status}`);
+  if (!response.ok || !response.headers.get('content-type')?.startsWith(expectedType)) {
+    throw Object.assign(new Error(`Public export failed: ${response.status}`), {
+      sourceDisabled: response.status === 402 && response.headers.get('x-vercel-error') === 'DEPLOYMENT_DISABLED',
+    });
+  }
   if (Number(response.headers.get('content-length') || 0) > MAX_BYTES) throw new Error('Export too large');
   const reader = response.body.getReader();
   const chunks = []; let size = 0;
@@ -67,7 +71,13 @@ export async function syncBlogArchive({ root = resolve(dirname(fileURLToPath(imp
   const old = existing ? JSON.parse(existing) : { version: 1, articles: [] };
   if (old.version !== 1) throw new Error('Unsupported local archive');
   validateArticles(old.articles, true);
-  const { text } = await readPublic(`${ORIGIN}/api/blog/archive`, fetcher, 'application/json');
+  let exported;
+  try { exported = await readPublic(`${ORIGIN}/api/blog/archive`, fetcher, 'application/json'); }
+  catch (error) {
+    if (!error.sourceDisabled) throw error;
+    return { downloaded: 0, pending: 0, changed: 0, articles: old.articles.length, skipped: 'source-deployment-disabled' };
+  }
+  const { text } = exported;
   const manifest = JSON.parse(text);
   if (manifest.version !== 1) throw new Error('Unsupported public export');
   validateArticles(manifest.articles);

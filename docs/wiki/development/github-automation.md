@@ -23,6 +23,9 @@ response types, language and SHA-256, bounds downloads and file sizes, rejects
 symbolic links and writes only `docs/blog/`. It generates article and language
 indexes and a deterministic manifest. Repeat runs without content changes make
 no commit. Failed exports stop the run; earlier published copies are retained.
+If Vercel reports `402 DEPLOYMENT_DISABLED` for the manifest, the run explicitly
+skips synchronization without changing files, creating a token or committing.
+Normal synchronization resumes when the public source is available again.
 Images remain linked to their public hosts. This reading archive and its Git
 history supplement the website's storage; they do not replace database backups.
 

@@ -73,6 +73,16 @@ test('bounded runs continue on the next sync and never delete earlier published 
   assert.equal((await syncBlogArchive({ ...smaller, root: fixture.root })).articles, 2);
 });
 
+test('a disabled Vercel source preserves the archive and skips publishing', async () => {
+  const fixture = await setup();
+  await syncBlogArchive(fixture);
+  const path = join(fixture.root, 'docs/blog/manifest.json');
+  const before = await readFile(path, 'utf8');
+  const fetcher = async () => new Response('Payment required', { status: 402, headers: { 'x-vercel-error': 'DEPLOYMENT_DISABLED' } });
+  assert.deepEqual(await syncBlogArchive({ root: fixture.root, fetcher }), { downloaded: 0, pending: 0, changed: 0, articles: 1, skipped: 'source-deployment-disabled' });
+  assert.equal(await readFile(path, 'utf8'), before);
+});
+
 test('refuses symbolic-link destinations', async () => {
   const fixture = await setup();
   const outside = await setup();
