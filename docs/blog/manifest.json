@@ -3,6 +3,14 @@
   "articles": [
     {
       "slug": "community-activities-page-phone-accessibility",
+      "locale": "ar",
+      "title": "اجعل صفحة أنشطة المجتمع أسهل استخدامًا على الهاتف",
+      "published": "2026-11-26",
+      "revision": "a899560eb0c44c1b6c58a4f97b958c479e7b54c65ae2dfda2c71cfff0fe72d10",
+      "sha256": "02989049c482f4f62fe5539bee65dcc1003f96ac6bddf0abc42bd0c04a1ff359"
+    },
+    {
+      "slug": "community-activities-page-phone-accessibility",
       "locale": "de",
       "title": "Eine Seite zu Community-Aktivitäten auf dem Smartphone leichter nutzbar machen",
       "published": "2026-11-26",
@@ -43,11 +51,83 @@
     },
     {
       "slug": "community-activities-page-phone-accessibility",
+      "locale": "ja",
+      "title": "スマートフォンで使いやすいコミュニティ活動ページを作る",
+      "published": "2026-11-26",
+      "revision": "d1d285a41edb0ed3ce4724be645e55557520b1d0ad861509705ae95d5ce5a13b",
+      "sha256": "c0ae45ff9cabdc85cd8edba69f25264b08d756473bb7c960ed522b30ca02f65b"
+    },
+    {
+      "slug": "community-activities-page-phone-accessibility",
+      "locale": "ko",
+      "title": "휴대폰에서 커뮤니티 활동 페이지를 더 쉽게 이용하도록 만들기",
+      "published": "2026-11-26",
+      "revision": "cdb572e12c3e1c31523308009691bc5a04677ef4d770ec3a08245bd0b44dee80",
+      "sha256": "bcd2adfaef74194a2dd1564d44fe1ce856acd03e9aeaf6453b53da415446ecfc"
+    },
+    {
+      "slug": "community-activities-page-phone-accessibility",
+      "locale": "nl",
+      "title": "Maak een pagina met buurtactiviteiten makkelijker te gebruiken op een telefoon",
+      "published": "2026-11-26",
+      "revision": "ea429ac04f5359b30c93e2c339b42d912e67cc3b225047433780c95f2bb3638c",
+      "sha256": "c6b6c385c1667a4272164cde5ea50964b6f55b7178d7ace5ba0eab8c430df50e"
+    },
+    {
+      "slug": "community-activities-page-phone-accessibility",
+      "locale": "pl",
+      "title": "Ułatw korzystanie ze strony wydarzeń społecznościowych na telefonie",
+      "published": "2026-11-26",
+      "revision": "81ebef77ee5b793646cd1d20afa7a9f86c7c3745eac7d57070748e8b339a5bc5",
+      "sha256": "e8166eb8a48a51ce8d93228fefd99242e6393967bcbc591ff18648e614765dbc"
+    },
+    {
+      "slug": "community-activities-page-phone-accessibility",
       "locale": "pt",
       "title": "Torne uma página de atividades comunitárias mais fácil de usar num telemóvel",
       "published": "2026-11-26",
       "revision": "0b9d1b8d06b9290f0e4d4ded9c1bf245f6226ca14dad9c4b7d17698c6b06ad86",
       "sha256": "785e08e62a5e5848b791a997404f53b3ec2749b202724d1dfccfdc43fa65f0f8"
+    },
+    {
+      "slug": "community-activities-page-phone-accessibility",
+      "locale": "ru",
+      "title": "Сделайте страницу мероприятий сообщества удобнее для использования на телефоне",
+      "published": "2026-11-26",
+      "revision": "cb8f5fa34d4969a6858838775dde6580d3b6ea1580787c60653c1fc88e475f1a",
+      "sha256": "27aafc6d8f8f1ee768c0f7a050a5a9a046dad472ce43e394708860da21cb6ff2"
+    },
+    {
+      "slug": "community-activities-page-phone-accessibility",
+      "locale": "tr",
+      "title": "Bir Topluluk Etkinlikleri Sayfasını Telefonda Kullanmayı Kolaylaştırın",
+      "published": "2026-11-26",
+      "revision": "855a66ec20c9500dcda488b01d505157e4887e2ad52b9284af6b04ff130ca546",
+      "sha256": "bbbb799561b611d098c652bc116a9295a781444779a6e5d0d2a872e48454841d"
+    },
+    {
+      "slug": "community-activities-page-phone-accessibility",
+      "locale": "zh",
+      "title": "让社区活动页面在手机上更易使用",
+      "published": "2026-11-26",
+      "revision": "5f73ace03e6b83f81a25a4d0fb4ca1bc424af4531b0747969843bd8cd2872c7d",
+      "sha256": "8e1aa0cbec59872a3428c41b7a459fc53b63c5fc7b69e6fdabe849eda541f3a6"
+    },
+    {
+      "slug": "portrait-photographer-booking-page-maintenance",
+      "locale": "ar",
+      "title": "حافظ على تحديث صفحة حجز مصوّر البورتريه",
+      "published": "2026-11-20",
+      "revision": "9c13a0cefd08b255ac172ad8d7f75748196f3f2e847ee8189910ed4f23cdd7c5",
+      "sha256": "8a0bf259839efa54fbd7f3f1545b8a3dc3b9053ba863c16e002856a1233b9819"
+    },
+    {
+      "slug": "portrait-photographer-booking-page-maintenance",
+      "locale": "de",
+      "title": "Die Buchungsseite eines Porträtfotografen aktuell halten",
+      "published": "2026-11-20",
+      "revision": "b890c3293268926f022edca6708587c20d0d72cce819572d890168bb998cdf0e",
+      "sha256": "b7c4c3e12644884cd11a2c0ffe00494cfb516f301111efab5b66b06486546f3c"
     },
     {
       "slug": "portrait-photographer-booking-page-maintenance",
@@ -58,6 +138,110 @@
       "sha256": "2bf089d755fdb6ed893082c11a0828ecd29ce6f4eec05c5733446cb7d1ca5031"
     },
     {
+      "slug": "portrait-photographer-booking-page-maintenance",
+      "locale": "es",
+      "title": "Mantén al día la página de reservas de un fotógrafo de retratos",
+      "published": "2026-11-20",
+      "revision": "c6bb829701cd1cf0e9e2c6614e871d724f2ee2499967a033f808a6bed39a7e1f",
+      "sha256": "61cfa220ec50cd8c6a2c4f699851ceb9a503f8e5f233a4c154f1a4c89450974e"
+    },
+    {
+      "slug": "portrait-photographer-booking-page-maintenance",
+      "locale": "fr",
+      "title": "Maintenir à jour la page de réservation d’un photographe de portrait",
+      "published": "2026-11-20",
+      "revision": "b3e0ddf937c7761dfaefb9316142c38f1e81e00fcf280db48b9555dab856d677",
+      "sha256": "8d9e72c5efa4584e3a04dcd31563c552013d368a34770767b3e39d684bf6bb2a"
+    },
+    {
+      "slug": "portrait-photographer-booking-page-maintenance",
+      "locale": "it",
+      "title": "Mantieni aggiornata la pagina di prenotazione di un fotografo ritrattista",
+      "published": "2026-11-20",
+      "revision": "9c70297d8b5535614b2accdfe06f1bdb191379f6b795b85d83593c3472858e16",
+      "sha256": "6cf47165d401c9bd30f0530962233cd985ad41bb6f43e2a85e701824e7a232d4"
+    },
+    {
+      "slug": "portrait-photographer-booking-page-maintenance",
+      "locale": "ja",
+      "title": "ポートレート写真家の予約ページを最新に保つ",
+      "published": "2026-11-20",
+      "revision": "27032fc8744e57c3f7926efbeac3ccd2b314578a3564f7bb2f02c1627288c302",
+      "sha256": "6a8d9624dd6b483e2db3a2a58e1fc654a648e7e629a38294c6e81bca21c85c76"
+    },
+    {
+      "slug": "portrait-photographer-booking-page-maintenance",
+      "locale": "ko",
+      "title": "인물 사진작가의 예약 페이지를 최신 상태로 유지하기",
+      "published": "2026-11-20",
+      "revision": "6da90a6fb19812eaeb00b9020981cec84bac47949969e8ef7efe80498c8ad9bf",
+      "sha256": "8e14f116521fe4246d0eda0e9b9d63cabb44ece7d6a3967fb3e7fe71ccf59a51"
+    },
+    {
+      "slug": "portrait-photographer-booking-page-maintenance",
+      "locale": "nl",
+      "title": "Houd de boekingspagina van een portretfotograaf actueel",
+      "published": "2026-11-20",
+      "revision": "083797e498f60e5422ca97a594d6fd0c6e0d0884593299e8ff60c243bde4d86c",
+      "sha256": "882053ca54b4d091a4314f3b68827ef151220086517ab81e3364f3e7706dfd6f"
+    },
+    {
+      "slug": "portrait-photographer-booking-page-maintenance",
+      "locale": "pl",
+      "title": "Aktualizuj stronę rezerwacji fotografa portretowego",
+      "published": "2026-11-20",
+      "revision": "3aae0d334e053a25f4075134712e2b779ebc159ad18ff102f2f1063afccc3491",
+      "sha256": "96de7ae9716c3f4f8c4fdfc2d54e3b15067e674f7d4ebd19e812185b5cd49c86"
+    },
+    {
+      "slug": "portrait-photographer-booking-page-maintenance",
+      "locale": "pt",
+      "title": "Mantenha atualizada a página de reservas de um fotógrafo de retratos",
+      "published": "2026-11-20",
+      "revision": "6e083c3bc11e539e9996ea685bb8057adaa7a9cd54be03515b191c395912e544",
+      "sha256": "86c58e79ecbe8bfe5f093c6be05e847118164dd8ae07a56ba0098f9c198a00ac"
+    },
+    {
+      "slug": "portrait-photographer-booking-page-maintenance",
+      "locale": "ru",
+      "title": "Поддерживайте страницу бронирования портретного фотографа в актуальном состоянии",
+      "published": "2026-11-20",
+      "revision": "d7c5ee9258e49bb3adbaf9c718621c7a7f9d58d7c55a74da8c5ef05a129f749c",
+      "sha256": "e8551ce4b3021ca6c87357a4470a3b22c78a9ffa37d6fde4e15a5f7bf0dcffed"
+    },
+    {
+      "slug": "portrait-photographer-booking-page-maintenance",
+      "locale": "tr",
+      "title": "Portre Fotoğrafçısının Rezervasyon Sayfasını Güncel Tutun",
+      "published": "2026-11-20",
+      "revision": "abb39015e09cadd9c900bf5601b3b17a651c478235f4b500b1c833dfce8e8e4e",
+      "sha256": "1e27da4e282fc622a52d276bd699573feef2181315d068b6801d2b64377571fb"
+    },
+    {
+      "slug": "portrait-photographer-booking-page-maintenance",
+      "locale": "zh",
+      "title": "保持人像摄影师的预约页面信息最新",
+      "published": "2026-11-20",
+      "revision": "7fdc3bede5f8071afa59968e6e249a927dca1f588c3744f0231b3a01cda3b5be",
+      "sha256": "f926e373986b784c45519779434cda1222fd9289dba720e908cf16be0301a6f5"
+    },
+    {
+      "slug": "printed-qr-enquiry-journey-consultants",
+      "locale": "ar",
+      "title": "خطّط لمسار استفسار عبر رمز QR مطبوع للاستشاريين المستقلين",
+      "published": "2026-11-20",
+      "revision": "a83ab901f1b3670d725135a79d241a69306eabdfa2172a3bde338818567bcd39",
+      "sha256": "57e7c30e53b79465559bef971de1c241d5d99edc5c8faa67537883c19dd3174e"
+    },
+    {
+      "slug": "printed-qr-enquiry-journey-consultants",
+      "locale": "de",
+      "title": "Eine QR-Anfragestrecke für unabhängige Berater planen",
+      "published": "2026-11-20",
+      "revision": "92dba92a6e1d88776c6262dad247fa212a5f8db2500a7cd5a7d058b7b1540caf",
+      "sha256": "6d12b0c95a97051fce6ae0e14d4b2a441d1856373adfc02022f314b81740d66f"
+    },
+    {
       "slug": "printed-qr-enquiry-journey-consultants",
       "locale": "en",
       "title": "Plan a Printed QR Enquiry Journey for Independent Consultants",
@@ -66,12 +250,204 @@
       "sha256": "d09e740ca25fe160ff48e0557dd1f9bed372727619b380467c59b2177b7f4305"
     },
     {
+      "slug": "printed-qr-enquiry-journey-consultants",
+      "locale": "es",
+      "title": "Planifica un recorrido de consulta con QR impreso para consultores independientes",
+      "published": "2026-11-20",
+      "revision": "d141a4ab42b16dc3ba27fd06f88bbbea9a2b304113a06c8e230ae43ee51a9d71",
+      "sha256": "ecc81b469141c417aa8c3ae7ca97bbf7020960180b49eee3815ac4b655542980"
+    },
+    {
+      "slug": "printed-qr-enquiry-journey-consultants",
+      "locale": "fr",
+      "title": "Concevoir un parcours de demande par QR code imprimé pour les consultants indépendants",
+      "published": "2026-11-20",
+      "revision": "c17cc1e8cfc61ac733ba11e2083fd22d63d519cf433738053c52a4b4dba93473",
+      "sha256": "20bbe8b3bd0d56dddc6c213e95a6759d2a134cd774ff711d5e522e1271f10c97"
+    },
+    {
+      "slug": "printed-qr-enquiry-journey-consultants",
+      "locale": "it",
+      "title": "Pianificare il percorso di richiesta tramite QR stampato per consulenti indipendenti",
+      "published": "2026-11-20",
+      "revision": "0459ca4235220fe6d1c13c78fdf62194cd18bc408e5e6c2e8ef1596826b59f3a",
+      "sha256": "566dc53e6aa5de02ba7ed678983be3435662b3486b4b2aec9c4181606dc2f66b"
+    },
+    {
+      "slug": "printed-qr-enquiry-journey-consultants",
+      "locale": "ja",
+      "title": "独立系コンサルタントのための、印刷QRコードから問い合わせまでの導線設計",
+      "published": "2026-11-20",
+      "revision": "79301cfea7fdf20d7e8dab02711d1ddc9b4d0f120d17b3494cb3359698a064ab",
+      "sha256": "e434614fa73954fa98ba798119756188661ada274a47f9baa95f9b18c4a684d2"
+    },
+    {
+      "slug": "printed-qr-enquiry-journey-consultants",
+      "locale": "ko",
+      "title": "독립 컨설턴트를 위한 인쇄물 QR 문의 여정 계획하기",
+      "published": "2026-11-20",
+      "revision": "6b578b7ec79f5828b361affad4097fe72529f79e95ec49f073011758aacdf8cf",
+      "sha256": "51ca4101a179de38651ca62e109cd0ef820e1d0bcb62b6f448529269e44ecfcf"
+    },
+    {
+      "slug": "printed-qr-enquiry-journey-consultants",
+      "locale": "nl",
+      "title": "Plan een aanvraagtraject via QR-code voor zelfstandige consultants",
+      "published": "2026-11-20",
+      "revision": "923df6068e02babb49ead4fd5c0123a1d8a3332aab92baa0555a0b888ee30b79",
+      "sha256": "16de918c0f10effea2acc1f7af9da8ba881c47db58a9af9b87dd91034f835853"
+    },
+    {
+      "slug": "printed-qr-enquiry-journey-consultants",
+      "locale": "pl",
+      "title": "Zaplanuj ścieżkę od wydrukowanego kodu QR do zapytania o projekt dla niezależnych konsultantów",
+      "published": "2026-11-20",
+      "revision": "09d08ebb97656c439ed5693328dfaf134f570cde6868c9a639ea8e8507cae261",
+      "sha256": "45f2b1c166e22f17e81dc088ec8d93021a9d175b2aa0f0fb9ca4c522093add23"
+    },
+    {
+      "slug": "printed-qr-enquiry-journey-consultants",
+      "locale": "pt",
+      "title": "Planeje uma jornada de pedido de informações por QR code impresso para consultores independentes",
+      "published": "2026-11-20",
+      "revision": "2a2448153a05144624b6b07a2240078ca035212f9b8e7eaf252efc9521c9be37",
+      "sha256": "5874efd0539fa9079386203c93412852444deae9d4400fae99b03a55ceaa9c92"
+    },
+    {
+      "slug": "printed-qr-enquiry-journey-consultants",
+      "locale": "ru",
+      "title": "Как спланировать путь от печатного QR-кода до заявки для независимых консультантов",
+      "published": "2026-11-20",
+      "revision": "d75bee3829473b22923e4da573de5b0f05b206ed7fe6a0da1b57450e4c002b17",
+      "sha256": "bd38926887c84353daafc192bbd965f5ddd1dfb8558796d6244180bc2815bbd2"
+    },
+    {
+      "slug": "printed-qr-enquiry-journey-consultants",
+      "locale": "tr",
+      "title": "Bağımsız Danışmanlar İçin Basılı QR Kodlu Talep Yolculuğu Planlama",
+      "published": "2026-11-20",
+      "revision": "e685e22042e96223586a9bd2ee27af6409616ec2c7e994d54effb9ef7979ba82",
+      "sha256": "5cbc35898a835b239c19d994ef69c0b7b95c96d8f2b5be4b7ce1f916d3712de2"
+    },
+    {
+      "slug": "printed-qr-enquiry-journey-consultants",
+      "locale": "zh",
+      "title": "为独立顾问规划印刷品二维码咨询流程",
+      "published": "2026-11-20",
+      "revision": "73c0431b0719c2c18343ab307a1a67598275dd97584c31cb2793471c2d44acd1",
+      "sha256": "b17ea81c7083ca22079673610759508ee9d985abb9f157640bcd542910c3b30e"
+    },
+    {
+      "slug": "verify-who-runs-digital-product-catalogue-page",
+      "locale": "ar",
+      "title": "كيف يمكن لصنّاع المنتجات الرقمية إظهار الجهة التي تدير صفحة الكتالوج",
+      "published": "2026-11-20",
+      "revision": "733e36e8b210f2f1e85e84dd7d46c83a5dac4d93f0f1e1f96cf1724f13e8553a",
+      "sha256": "72b4dd3f5bcc1ce48d1f482663a763f695f942eaba44a7d78e9938281b99945f"
+    },
+    {
+      "slug": "verify-who-runs-digital-product-catalogue-page",
+      "locale": "de",
+      "title": "Wie Anbieter digitaler Produkte zeigen können, wer eine Katalogseite betreibt",
+      "published": "2026-11-20",
+      "revision": "4862ca92b377df3e75152f8faeb49d7be3ccae396255dd745e28502b3f90986f",
+      "sha256": "3a7afbb8ac174a01e8c94f4c15293af0d0f8f523c4feb11ca225e0303a396ffc"
+    },
+    {
       "slug": "verify-who-runs-digital-product-catalogue-page",
       "locale": "en",
       "title": "How Digital Product Makers Can Show Who Runs a Catalogue Page",
       "published": "2026-11-20",
       "revision": "03215d0f00d65954b11d9bf1704d7fad9af2a9fa1eeed545093ef4f6a5cb32a0",
       "sha256": "608f7c1fd3eec6bef51aca680c91cc78f1040ac063a14a015c844899162ca3ca"
+    },
+    {
+      "slug": "verify-who-runs-digital-product-catalogue-page",
+      "locale": "es",
+      "title": "Cómo pueden los creadores de productos digitales mostrar quién gestiona una página de catálogo",
+      "published": "2026-11-20",
+      "revision": "0b4e584875749167d77247f879e06744d757c89f2782656bda353915802ad0cc",
+      "sha256": "7abb2df9cbe994947b7dbf4fd259f14e63647475b3828640b07d1b0a8af3fc5c"
+    },
+    {
+      "slug": "verify-who-runs-digital-product-catalogue-page",
+      "locale": "fr",
+      "title": "Comment les créateurs de produits numériques peuvent indiquer qui gère une page de catalogue",
+      "published": "2026-11-20",
+      "revision": "0cc5671b9c037cdeeb68a4a650612a26c3cdef22cdf540aed5dc9381a3450f76",
+      "sha256": "f0888f56e0bf2f15fef36622460bedc0282be9fd3a01cb217c4900dacb0f2a4c"
+    },
+    {
+      "slug": "verify-who-runs-digital-product-catalogue-page",
+      "locale": "it",
+      "title": "Come i creatori di prodotti digitali possono mostrare chi gestisce una pagina catalogo",
+      "published": "2026-11-20",
+      "revision": "fee6f7e3fa238ad3e488ad2a5cd48225a858682e716d0d63cc77e6e4abd1f5ee",
+      "sha256": "7358682200f6f8371472b58c681c2168c528382c9541aa4f2cdd5e13b8de9fd1"
+    },
+    {
+      "slug": "verify-who-runs-digital-product-catalogue-page",
+      "locale": "ja",
+      "title": "デジタル商品の制作者がカタログページの運営者を明らかにする方法",
+      "published": "2026-11-20",
+      "revision": "d6f483c1181989d1b3c561e74b73b33e73102d0c565731356419d4e4cd6e5eef",
+      "sha256": "787145237e53d489a3782a82915ea7f403f85d51842c8df5dd333a912a54b2bf"
+    },
+    {
+      "slug": "verify-who-runs-digital-product-catalogue-page",
+      "locale": "ko",
+      "title": "디지털 제품 제작자는 카탈로그 페이지의 운영자를 어떻게 표시할 수 있을까요?",
+      "published": "2026-11-20",
+      "revision": "df60382cf9b4f6b3c5650b114e119e8b49efcf8d70d6da9aaff5b8760eea2e5f",
+      "sha256": "15493bc55f31cf7b0de0e0e6913ff3c959f73a489cf0ffa7cfebbee2e30eda4f"
+    },
+    {
+      "slug": "verify-who-runs-digital-product-catalogue-page",
+      "locale": "nl",
+      "title": "Hoe makers van digitale producten kunnen laten zien wie een cataloguspagina beheert",
+      "published": "2026-11-20",
+      "revision": "cbfa7cf8291d980afdd1e5891ac675ec7c77bb55e179ae3aac6d472d14f06c9f",
+      "sha256": "7def7b7562841bf535749e0299b526c6cca258d63f7fa2f0fd3c4ea25119e2b4"
+    },
+    {
+      "slug": "verify-who-runs-digital-product-catalogue-page",
+      "locale": "pl",
+      "title": "Jak twórcy produktów cyfrowych mogą pokazać, kto prowadzi stronę katalogu",
+      "published": "2026-11-20",
+      "revision": "b626452638a18dcb409fc17edfa432af24d741ec7d502c0754995dc6e0799999",
+      "sha256": "32695ee6e2cbd5feea4f10e54aea72bca35e705ebbec8f30dafb3b50d9721e35"
+    },
+    {
+      "slug": "verify-who-runs-digital-product-catalogue-page",
+      "locale": "pt",
+      "title": "Como criadores de produtos digitais podem mostrar quem administra uma página de catálogo",
+      "published": "2026-11-20",
+      "revision": "fe24489c0ce33624b4c8be0b7a2acf186bb812c6bf9b1ac6200fed8f4e14a2d7",
+      "sha256": "7716fa9bd84456575189d32a73a58f6072175cec5a523ad13ec90b0de7543fef"
+    },
+    {
+      "slug": "verify-who-runs-digital-product-catalogue-page",
+      "locale": "ru",
+      "title": "Как создателям цифровых продуктов показать, кто ведёт страницу каталога",
+      "published": "2026-11-20",
+      "revision": "e77b47c12fd1c07803b0e48288dba6a9d948b20a7f7c8aecd02cce30f934aa30",
+      "sha256": "81a6ed03a4f47be8c7fd4ed442ef8467d6572e875da3031cfdf97c3918260c5f"
+    },
+    {
+      "slug": "verify-who-runs-digital-product-catalogue-page",
+      "locale": "tr",
+      "title": "Dijital Ürün Üreticileri Bir Katalog Sayfasını Kimin Yönettiğini Nasıl Gösterebilir?",
+      "published": "2026-11-20",
+      "revision": "23973de7f26bd92baf3994678481ec0d0f3ce851188bcc89652ab305e59cd756",
+      "sha256": "7a32d754051c0a709d8d9c7f4f5ff77f129b2b8445421fd20482d91d6143a946"
+    },
+    {
+      "slug": "verify-who-runs-digital-product-catalogue-page",
+      "locale": "zh",
+      "title": "数字产品创作者如何说明谁在运营目录页面",
+      "published": "2026-11-20",
+      "revision": "1ec321af6cf519eccc144f2b04b9172d73a8f496a07df89c6717fa470afeed56",
+      "sha256": "230aa698e50280cc37198e6cb820e96c115ce71c629e843b27249cf6c390a8db"
     },
     {
       "slug": "how-to-add-link-to-tiktok-bio-a-2026-guide-for-creators",
