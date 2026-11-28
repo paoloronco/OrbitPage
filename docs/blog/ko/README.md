@@ -6,3 +6,5 @@
 - 2026-11-20 — [인물 사진작가의 예약 페이지를 최신 상태로 유지하기](./portrait-photographer-booking-page-maintenance.md)
 - 2026-11-20 — [독립 컨설턴트를 위한 인쇄물 QR 문의 여정 계획하기](./printed-qr-enquiry-journey-consultants.md)
 - 2026-11-20 — [디지털 제품 제작자는 카탈로그 페이지의 운영자를 어떻게 표시할 수 있을까요?](./verify-who-runs-digital-product-catalogue-page.md)
+- 2026-11-09 — [TikTok 프로필에 링크 추가하는 방법: 크리에이터를 위한 2026년 가이드](./how-to-add-link-to-tiktok-bio-a-2026-guide-for-creators.md)
+- 2026-11-08 — [2026년 최고의 무료 원페이지 웹사이트 템플릿 옵션](./best-free-one-page-website-template-options-for-2026.md)

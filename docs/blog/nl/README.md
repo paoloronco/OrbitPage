@@ -6,3 +6,5 @@
 - 2026-11-20 — [Houd de boekingspagina van een portretfotograaf actueel](./portrait-photographer-booking-page-maintenance.md)
 - 2026-11-20 — [Plan een aanvraagtraject via QR-code voor zelfstandige consultants](./printed-qr-enquiry-journey-consultants.md)
 - 2026-11-20 — [Hoe makers van digitale producten kunnen laten zien wie een cataloguspagina beheert](./verify-who-runs-digital-product-catalogue-page.md)
+- 2026-11-08 — [De beste gratis opties voor templates voor websites van één pagina in 2026](./best-free-one-page-website-template-options-for-2026.md)
+- 2026-11-07 — [De beste websiteoplossing voor restaurants kiezen in 2026](./choosing-the-best-restaurant-website-solution-in-2026.md)

@@ -6,3 +6,4 @@
 - 2026-11-20 — [保持人像摄影师的预约页面信息最新](./portrait-photographer-booking-page-maintenance.md)
 - 2026-11-20 — [为独立顾问规划印刷品二维码咨询流程](./printed-qr-enquiry-journey-consultants.md)
 - 2026-11-20 — [数字产品创作者如何说明谁在运营目录页面](./verify-who-runs-digital-product-catalogue-page.md)
+- 2026-11-08 — [2026 年最佳免费单页网站模板选项](./best-free-one-page-website-template-options-for-2026.md)
